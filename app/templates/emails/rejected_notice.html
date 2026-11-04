@@ -1,0 +1,24 @@
+{% extends "_layout.html" %}
+{% block preheader %}{{ rejector_name }} rejected {{ document_filename }}.{% endblock %}
+{% block badge %}
+  <div style="display:inline-block;font-family:Consolas,'Courier New',monospace;font-size:12px;font-weight:600;letter-spacing:0.04em;color:#b03a28;border:1.5px solid #b03a28;padding:3px 9px;margin-bottom:12px;">REJECTED</div>
+{% endblock %}
+{% block heading %}{{ document_filename }}{% endblock %}
+{% block body %}
+  <p style="margin:0 0 12px 0;">{{ rejector_name }} rejected this at step {{ step_order }}.</p>
+  <p style="margin:0 0 12px 0;padding:10px 12px;background-color:#f6f7f9;border-left:3px solid #b03a28;color:#161a2b;">{{ reason }}</p>
+{% endblock %}
+{% block cta %}
+<tr>
+  <td style="padding:4px 28px 24px 28px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="background-color:#2b3a66;">
+          <a href="{{ chain_url }}" style="display:inline-block;padding:11px 22px;font-family:'Segoe UI',Arial,sans-serif;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;">View the audit trail</a>
+        </td>
+      </tr>
+    </table>
+  </td>
+</tr>
+{% endblock %}
+{% block footer %}Sent by DocuFlow on behalf of your organization.{% endblock %}

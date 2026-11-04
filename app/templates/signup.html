@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Create account - DocuFlow{% endblock %}
+{% block content %}
+  <div class="auth-card dossier">
+    <span class="dossier-tab">CREATE ACCOUNT</span>
+    <h1>Set up your account</h1>
+    <p>Use your <strong>@{{ domain }}</strong> work email. No invite needed.</p>
+
+    {% if error %}<div class="error-banner">{{ error|replace("+", " ") }}</div>{% endif %}
+
+    <form method="post" action="/auth/signup">
+      <div class="field">
+        <label for="display_name">Full name</label>
+        <input type="text" id="display_name" name="display_name" placeholder="Jane Rahman" required autofocus>
+      </div>
+      <div class="field">
+        <label for="email">Work email</label>
+        <input type="email" id="email" name="email" placeholder="you@{{ domain }}" required>
+        <div class="field-hint">Must end in @{{ domain }}.</div>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" minlength="8" required>
+        <div class="field-hint">At least 8 characters.</div>
+      </div>
+      <div class="field">
+        <label for="confirm_password">Confirm password</label>
+        <input type="password" id="confirm_password" name="confirm_password" minlength="8" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Create account</button>
+    </form>
+    <p class="field-hint" style="margin-top: 1.1rem;">Already have an account? <a href="/auth/login">Log in</a></p>
+  </div>
+{% endblock %}

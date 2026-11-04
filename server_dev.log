@@ -1,0 +1,17 @@
+INFO:     Started server process [16012]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+INFO:     127.0.0.1:56622 - "GET / HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:57043 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57043 - "GET /static/css/style.css?v=1793785385 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61789 - "GET /static/images/upay-logo.png?v=1793785385 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62127 - "GET /static/js/app.js?v=1793785385 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49798 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49798 - "GET /static/css/style.css?v=1793785385 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:56300 - "GET /static/js/app.js?v=1793785385 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:56300 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62134 - "GET /chains/e6c944fd-233b-409c-aab9-f6ec73661def HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62134 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62134 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62134 - "GET /settings HTTP/1.1" 200 OK

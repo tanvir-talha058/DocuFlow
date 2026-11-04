@@ -1,0 +1,23 @@
+{% extends "_layout.html" %}
+{% block preheader %}{{ initiator_name }} needs your review on {{ display_title }}.{% endblock %}
+{% block heading %}{{ display_title }}{% endblock %}
+{% block body %}
+  <p style="margin:0 0 12px 0;">{{ initiator_name }} sent you this document to review. You're step {{ step_order }} of {{ total_steps }}{% if total_steps > 1 %} in the chain{% endif %}.</p>
+  {% if message %}
+    <p style="margin:0 0 12px 0;padding:10px 12px;background-color:#f6f7f9;border-left:3px solid #2b3a66;color:#161a2b;">{{ message }}</p>
+  {% endif %}
+{% endblock %}
+{% block cta %}
+<tr>
+  <td style="padding:4px 28px 24px 28px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="background-color:#2b3a66;">
+          <a href="{{ review_url }}" style="display:inline-block;padding:11px 22px;font-family:'Segoe UI',Arial,sans-serif;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;">Review and respond</a>
+        </td>
+      </tr>
+    </table>
+  </td>
+</tr>
+{% endblock %}
+{% block footer %}This link is private to you and expires in {{ ttl_hours }} hours.{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Sign document - DocuFlow{% endblock %}
+{% block content %}
+  <h1 class="doc-title">{{ chain.title or document.original_filename }}</h1>
+  {% if chain.title %}<p class="ref" style="margin-top: -1rem;">{{ document.original_filename }}</p>{% endif %}
+  <p class="review-meta">
+    Sent by <strong>{{ initiator.display_name }}</strong> for your signature, as {{ customer.display_name }}.
+    You're signer {{ step.step_order }} in this chain.
+  </p>
+
+  {% if chain.message %}
+    <div class="chain-message">{{ chain.message }}</div>
+  {% endif %}
+
+  {% if error %}<div class="error-banner">{{ error }}</div>{% endif %}
+
+  <div class="dossier">
+    <span class="dossier-tab">STEP {{ step.step_order }}</span>
+    <p><a href="/documents/{{ document.id }}/download?token={{ token }}" class="icon-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>Open the document to review</a></p>
+
+    <div class="signature-pane">
+      <div class="sign-line-label">Sign below to approve</div>
+      <form id="sign-form" method="post" action="/review/{{ token }}/approve">
+        <div class="signature-canvas-wrap">
+          <canvas id="signature-pad" width="700" height="160"></canvas>
+          <div class="sign-here-line"></div>
+          <span class="sign-here-mark">&times;</span>
+        </div>
+        <div class="signature-actions">
+          <button type="button" class="btn btn-ghost" id="clear-signature">Clear</button>
+          <span class="field-hint">Draw with your mouse, stylus, or finger.</span>
+        </div>
+        <input type="hidden" name="signature_data_url" id="signature-data-url">
+        <div class="decision-row">
+          <button type="submit" class="btn btn-stamp-approve" id="approve-btn" disabled>Approve and sign</button>
+        </div>
+      </form>
+
+      <form method="post" action="/review/{{ token }}/reject" class="decision-row" data-confirm-reject>
+        <input type="text" name="reason" class="reject-reason" placeholder="Reason for rejecting" required>
+        <button type="submit" class="btn btn-stamp-reject">Reject</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/static/js/signature_pad.js?v={{ static_version }}"></script>
+{% endblock %}
+{% block scripts %}
+<script>
+  document.querySelectorAll("[data-confirm-reject]").forEach((form) => {
+    form.addEventListener("submit", (e) => {
+      if (!confirm("Reject this document? This cannot be undone.")) e.preventDefault();
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Review document - DocuFlow{% endblock %}
+{% block content %}
+  <h1 class="doc-title">{{ chain.title or document.original_filename }}</h1>
+  {% if chain.title %}<p class="ref" style="margin-top: -1rem;">{{ document.original_filename }}</p>{% endif %}
+  <p class="review-meta">
+    Sent by <strong>{{ initiator.display_name }}</strong>.
+    You're reviewer {{ step.step_order }} in this chain.
+  </p>
+
+  {% if chain.message %}
+    <div class="chain-message">{{ chain.message }}</div>
+  {% endif %}
+
+  <div class="dossier">
+    <span class="dossier-tab">STEP {{ step.step_order }}</span>
+    <p><a href="/documents/{{ document.id }}/download?token={{ token }}" class="icon-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>Open the document</a></p>
+
+    <div class="decision-row">
+      <form method="post" action="/review/{{ token }}/approve">
+        <button type="submit" class="btn btn-stamp-approve">Approve</button>
+      </form>
+      <form method="post" action="/review/{{ token }}/reject" class="decision-row" style="margin:0; flex:1;" data-confirm-reject>
+        <input type="text" name="reason" class="reject-reason" placeholder="Reason for rejecting" required>
+        <button type="submit" class="btn btn-stamp-reject">Reject</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}
+{% block scripts %}
+<script>
+  document.querySelectorAll("[data-confirm-reject]").forEach((form) => {
+    form.addEventListener("submit", (e) => {
+      if (!confirm("Reject this document? This cannot be undone.")) e.preventDefault();
+    });
+  });
+</script>
+{% endblock %}

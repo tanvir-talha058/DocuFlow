@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}New chain - DocuFlow{% endblock %}
+{% block content %}
+  <a href="/" class="back-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Dashboard</a>
+  <h1>Route a document for review</h1>
+
+  <form method="post" action="/chains" enctype="multipart/form-data" id="chain-form">
+    <div class="dossier">
+      <span class="dossier-tab">DOCUMENT</span>
+      <div class="field">
+        <label for="file">File to route</label>
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="file" name="file" required class="dropzone-input">
+          <div class="dropzone-icon" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M12 4L7 9M12 4l5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+          </div>
+          <div class="dropzone-text" id="dropzone-text"><strong>Click to choose a file</strong> or drag it here</div>
+          <div class="dropzone-filename" id="dropzone-filename" hidden></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="title">Title <span class="field-optional">(optional)</span></label>
+        <input type="text" id="title" name="title" maxlength="255" placeholder="e.g. Q3 Vendor Agreement">
+        <div class="field-hint">Shown instead of the filename on the dashboard and review page. Leave blank to just use the filename.</div>
+      </div>
+
+      <div class="field">
+        <label for="message">Message to approvers <span class="field-optional">(optional)</span></label>
+        <textarea id="message" name="message" maxlength="2000" rows="3" placeholder="Any context or instructions for the people reviewing this&hellip;"></textarea>
+        <div class="field-hint"><span id="message-counter">0</span>/2000</div>
+      </div>
+
+      <div class="field">
+        <label>Approvers, in the order they should sign</label>
+        <div class="field-hint" style="margin-top: -0.2rem; margin-bottom: 0.5rem;">Drag the handle to reorder.</div>
+        <div id="approver-rows"></div>
+        <button type="button" class="btn-add-row" id="add-approver">+ Add approver</button>
+      </div>
+
+      <div class="field-hint" id="submit-hint" style="margin-bottom: 0.6rem;">Choose a file and pick at least one approver from the suggestions to continue.</div>
+      <button type="submit" class="btn btn-primary" id="submit-chain">Send to first approver</button>
+    </div>
+  </form>
+
+  <template id="approver-row-template">
+    <div class="approver-row" data-row draggable="true">
+      <span class="approver-drag-handle" title="Drag to reorder">&#8942;&#8942;</span>
+      <span class="routing-index-badge" data-row-index>1</span>
+      <select class="approver-type" name="approver_type">
+        <option value="EMPLOYEE">Employee</option>
+        <option value="CUSTOMER">External signer</option>
+      </select>
+      <div class="approver-input-wrap employee-input">
+        <input type="text" class="approver-search" placeholder="Search by name or email&hellip;">
+        <input type="hidden" name="approver_employee_id" class="approver-employee-id">
+      </div>
+      <div class="approver-input-wrap customer-input" hidden>
+        <input type="text" name="approver_customer_name" class="customer-name" placeholder="Full name">
+      </div>
+      <div class="approver-input-wrap customer-input" hidden>
+        <input type="text" name="approver_customer_email" class="customer-email" placeholder="Email address">
+      </div>
+      <button type="button" class="approver-remove" title="Remove">&times;</button>
+    </div>
+  </template>
+
+  <script src="/static/js/chain_new.js?v={{ static_version }}"></script>
+{% endblock %}

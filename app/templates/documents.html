@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Documents - DocuFlow{% endblock %}
+{% block shell_class %} is-wide{% endblock %}
+{% block content %}
+  <div class="page-header">
+    <h1>Documents</h1>
+    <a href="/chains/new" class="btn btn-primary">+ New Chain</a>
+  </div>
+
+  {% if documents %}
+    <div class="toolbar-v2">
+      <input type="search" id="doc-search" placeholder="Search by filename&hellip;" aria-label="Search documents">
+    </div>
+
+    <table id="doc-table">
+      <thead>
+        <tr><th>Document</th><th>Type</th><th>Size</th><th>Uploaded</th><th>Chain status</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for document, chain in documents %}
+        <tr data-filename="{{ document.original_filename|lower }}">
+          <td>{{ document.original_filename }}</td>
+          <td class="ref">{{ document.content_type }}</td>
+          <td class="ref">{{ document.size_bytes|filesizeformat }}</td>
+          <td class="ref">{{ document.uploaded_at.strftime("%Y-%m-%d %H:%M") }}</td>
+          <td>
+            {% if chain %}
+              <span class="stamp stamp-{{ chain.status }}">{{ chain.status.replace("_", " ") }}</span>
+            {% else %}
+              <span class="ref">No chain</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="/documents/{{ document.id }}/download">Download</a>
+            {% if chain %} · <a href="/chains/{{ chain.id }}">Open</a>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p id="no-doc-results" class="field-hint" hidden>No documents match your search.</p>
+  {% else %}
+    <div class="empty-state">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="color: var(--ink-faint); margin-bottom: 0.5rem;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+      <p>No documents uploaded yet. Start a chain to upload and route one.</p>
+    </div>
+  {% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  const searchInput = document.getElementById("doc-search");
+  const rows = Array.from(document.querySelectorAll("#doc-table tbody tr"));
+  const noResults = document.getElementById("no-doc-results");
+
+  function applyFilter() {
+    const query = (searchInput?.value || "").trim().toLowerCase();
+    let visible = 0;
+    rows.forEach((row) => {
+      const show = !query || row.dataset.filename.includes(query);
+      row.classList.toggle("is-filtered-out", !show);
+      if (show) visible += 1;
+    });
+    if (noResults) noResults.hidden = visible !== 0;
+  }
+
+  searchInput?.addEventListener("input", applyFilter);
+
+  const topbarSearch = document.getElementById("topbar-search");
+  topbarSearch?.addEventListener("input", () => {
+    if (searchInput) {
+      searchInput.value = topbarSearch.value;
+      applyFilter();
+    }
+  });
+})();
+</script>
+{% endblock %}

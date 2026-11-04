@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Log in to sign - DocuFlow{% endblock %}
+{% block content %}
+  <div class="auth-card dossier">
+    <span class="dossier-tab">SIGN IN</span>
+
+    <div class="context-strip">
+      <div class="context-label">You've been sent</div>
+      <div class="context-doc">{{ document.original_filename }}</div>
+      <div class="context-from">by {{ initiator.display_name }}</div>
+    </div>
+
+    <h1>Log in to continue</h1>
+    <p>Enter the password for <strong>{{ customer.email }}</strong> to open this document.</p>
+
+    {% if error %}<div class="error-banner">{{ error }}</div>{% endif %}
+
+    <form method="post" action="/review/{{ token }}/customer-login">
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Log in</button>
+    </form>
+  </div>
+{% endblock %}

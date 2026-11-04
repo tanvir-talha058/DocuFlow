@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Done - DocuFlow{% endblock %}
+{% block content %}
+  <div class="auth-card" style="text-align: center;">
+    {% if step.status == "APPROVED" %}
+      <div class="done-mark">&check;</div>
+      <h1>Recorded as approved</h1>
+      {% if chain_complete %}
+        <p>Every signer has now approved. The sender has been notified. You can close this page.</p>
+      {% else %}
+        <p>The next signer has been notified. You can close this page.</p>
+      {% endif %}
+    {% elif step.status == "REJECTED" %}
+      <div class="done-mark rejected">&times;</div>
+      <h1>Recorded as rejected</h1>
+      <p>The person who sent this document has been notified. You can close this page.</p>
+    {% else %}
+      <h1>Decision recorded</h1>
+    {% endif %}
+  </div>
+{% endblock %}

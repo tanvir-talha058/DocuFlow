@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Settings - DocuFlow{% endblock %}
+{% block content %}
+  <div class="page-header">
+    <h1>Settings</h1>
+  </div>
+
+  <form method="post" action="/settings">
+    <div class="dossier" style="margin-bottom: 1.5rem;">
+      <span class="dossier-tab">PROFILE</span>
+      <div class="field-row" style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+        <div class="field" style="flex: 1; min-width: 180px;">
+          <label for="display_name">Name</label>
+          <input type="text" id="display_name" name="display_name" value="{{ current_user.display_name }}" maxlength="255" required>
+        </div>
+        <div class="field" style="flex: 1; min-width: 180px;">
+          <label for="job_title">Job title</label>
+          <input type="text" id="job_title" name="job_title" value="{{ current_user.job_title or '' }}" maxlength="255" placeholder="e.g. Finance Manager">
+        </div>
+        <div class="field" style="flex: 1; min-width: 180px;">
+          <label>Email</label>
+          <p style="margin: 0.3rem 0 0; color: var(--ink);">{{ current_user.email }}</p>
+        </div>
+        <div class="field" style="flex: 1; min-width: 180px;">
+          <label>Department</label>
+          <p style="margin: 0.3rem 0 0; color: var(--ink);">{{ current_user.department or "—" }}</p>
+        </div>
+      </div>
+      <p class="field-hint">Email and department are managed by your organization's directory account. Name and job title are yours to edit.</p>
+    </div>
+
+    <div class="dossier" style="margin-bottom: 1.5rem;">
+      <span class="dossier-tab">APPEARANCE</span>
+      <div class="field">
+        <label for="theme_preference">Theme</label>
+        <select id="theme_preference" name="theme_preference">
+          <option value="system" {% if current_user.theme_preference == "system" %}selected{% endif %}>Match system</option>
+          <option value="light" {% if current_user.theme_preference == "light" %}selected{% endif %}>Light</option>
+          <option value="dark" {% if current_user.theme_preference == "dark" %}selected{% endif %}>Dark</option>
+        </select>
+        <p class="field-hint">Applies immediately after saving.</p>
+      </div>
+    </div>
+
+    <div class="dossier" style="margin-bottom: 1.5rem;">
+      <span class="dossier-tab">NOTIFICATIONS</span>
+      <div class="field">
+        <label style="display: flex; align-items: center; gap: 0.6rem; font-weight: 500;">
+          <input type="checkbox" name="notify_on_decision" value="true" {% if current_user.notify_on_decision %}checked{% endif %} style="width: auto;">
+          Email me when a document I sent is approved or rejected
+        </label>
+        <p class="field-hint">Approvers still always get the request and reminder emails — this only controls notices sent back to you.</p>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save settings</button>
+  </form>
+{% endblock %}
+{% block scripts %}
+<script>
+  {% if saved %}
+    window.showToast("Settings saved", "success");
+  {% endif %}
+</script>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}{{ chain.title or document.original_filename }} - DocuFlow{% endblock %}
+{% block content %}
+  <a href="/" class="back-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Dashboard</a>
+  <h1 class="doc-title">{{ chain.title or document.original_filename }}</h1>
+  {% if chain.title %}
+    <p class="ref" style="margin-top: -1rem; margin-bottom: 1rem;">{{ document.original_filename }}</p>
+  {% endif %}
+  <p>
+    <span class="stamp stamp-{{ chain.status }}">{{ chain.status.replace("_", " ") }}</span>
+    {% if chain.status == "REJECTED" %}
+      &nbsp;— rejected by {{ rejector_name }}: {{ chain.rejected_reason }}
+    {% endif %}
+  </p>
+  <p><a href="/documents/{{ document.id }}/download" class="icon-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>Download the document</a></p>
+
+  {% if chain.message %}
+    <div class="chain-message">{{ chain.message }}</div>
+  {% endif %}
+
+  {% set total_steps = steps|length %}
+  {% set completed_steps = steps|selectattr("0.status", "in", ["APPROVED", "REJECTED"])|list|length %}
+  <div class="progress-track"><div class="progress-fill" data-progress-fill data-target="{{ ((completed_steps / total_steps * 100) if total_steps else 0)|round(0, 'floor')|int }}"></div></div>
+  <div class="progress-caption">{{ completed_steps }} of {{ total_steps }} steps decided</div>
+
+  <h2>Routing order</h2>
+  <ol class="routing-list">
+    {% for step, approver in steps %}
+    <li class="routing-row{% if step.status in ['APPROVED', 'REJECTED'] %} is-complete{% elif chain.current_step_order == step.step_order %} is-active{% endif %}">
+      <span class="routing-index">{{ step.step_order }}</span>
+      <div>
+        <div>{{ approver.display_name }} <span class="ref">({{ approver.email }})</span></div>
+        <div style="margin-top: 0.25rem;">
+          <span class="stamp stamp-{{ step.status }}">{{ step.status.replace("_", " ") }}</span>
+          {% if step.approver_type == "CUSTOMER" %}
+            <span class="ref">external signer</span>
+          {% endif %}
+          {% if step.decided_at %}
+            <span class="ref">{{ step.decided_at.strftime("%Y-%m-%d %H:%M") }}</span>
+          {% endif %}
+        </div>
+        {% if step.status == "PENDING" %}
+          <div class="seen-indicator" style="margin-top: 0.3rem;">
+            {% if step.first_viewed_at %}
+              <span class="seen-dot is-seen"></span>Seen {{ step.first_viewed_at.strftime("%Y-%m-%d %H:%M") }}{% if step.view_count and step.view_count > 1 %} · opened {{ step.view_count }}×{% endif %}
+            {% else %}
+              <span class="seen-dot"></span>Not yet seen
+            {% endif %}
+            {% if is_initiator and chain.current_step_order == step.step_order %}
+              <form method="post" action="/chains/{{ chain.id }}/remind" style="margin: 0 0 0 0.5rem;">
+                <button type="submit" class="btn-copy">Send reminder</button>
+              </form>
+            {% endif %}
+          </div>
+        {% endif %}
+        {% if step.decision_reason %}
+          <div class="ref" style="margin-top: 0.25rem;">{{ step.decision_reason }}</div>
+        {% endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ol>
+
+  <h2>Activity timeline</h2>
+  <ol class="activity-timeline">
+    {% for entry in timeline %}
+      {% set event = entry.event %}
+      <li class="activity-row tone-{{ entry.tone }}">
+        <span class="activity-stamp"></span>
+        <div class="activity-body">
+          <div class="activity-head">
+            <span class="activity-label">{{ entry.label }}</span>
+            {% if entry.approver_name %}<span class="ref">{{ entry.approver_name }}</span>{% endif %}
+          </div>
+          {% if event.detail %}<div class="ref activity-detail">{{ event.detail }}</div>{% endif %}
+        </div>
+        <time class="activity-time">{{ event.created_at.strftime("%Y-%m-%d %H:%M") }}</time>
+      </li>
+    {% endfor %}
+  </ol>
+{% endblock %}
+{% block scripts %}
+<script>
+  requestAnimationFrame(() => {
+    const fill = document.querySelector("[data-progress-fill]");
+    if (fill) fill.style.width = `${fill.dataset.target}%`;
+  });
+  {% if reminded %}
+    window.showToast("Reminder sent", "success");
+  {% elif remind_error %}
+    window.showToast("{{ remind_error|replace('+', ' ') }}", "error");
+  {% endif %}
+</script>
+{% endblock %}

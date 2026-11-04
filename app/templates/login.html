@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Log in - DocuFlow{% endblock %}
+{% block content %}
+  <div class="auth-card dossier">
+    <span class="dossier-tab">LOG IN</span>
+    <h1>Welcome back</h1>
+    <p>Log in with your work email to get started.</p>
+
+    {% if error %}<div class="error-banner">{{ error|replace("+", " ") }}</div>{% endif %}
+
+    <form method="post" action="/auth/login">
+      <div class="field">
+        <label for="email">Work email</label>
+        <input type="email" id="email" name="email" placeholder="you@upaybd.com" required autofocus>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Log in</button>
+    </form>
+    <p class="field-hint" style="margin-top: 1.1rem;">New here? <a href="/auth/signup">Create an account</a></p>
+  </div>
+{% endblock %}

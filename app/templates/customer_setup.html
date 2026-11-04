@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Set up your account - DocuFlow{% endblock %}
+{% block content %}
+  <div class="auth-card dossier">
+    <span class="dossier-tab">ACCOUNT SETUP</span>
+
+    <div class="context-strip">
+      <div class="context-label">You've been sent</div>
+      <div class="context-doc">{{ document.original_filename }}</div>
+      <div class="context-from">by {{ initiator.display_name }}</div>
+    </div>
+
+    <h1>Set a password to continue</h1>
+    <p>You're signing as <strong>{{ customer.email }}</strong>. Set a password once, so you can come back later without the link.</p>
+
+    {% if error %}<div class="error-banner">{{ error }}</div>{% endif %}
+
+    <form method="post" action="/review/{{ token }}/customer-setup">
+      <div class="field">
+        <label for="password">New password</label>
+        <input type="password" id="password" name="password" minlength="8" required>
+        <div class="field-hint">At least 8 characters.</div>
+      </div>
+      <div class="field">
+        <label for="confirm_password">Confirm password</label>
+        <input type="password" id="confirm_password" name="confirm_password" minlength="8" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Create account and continue</button>
+    </form>
+  </div>
+{% endblock %}

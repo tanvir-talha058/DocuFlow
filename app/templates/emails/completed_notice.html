@@ -1,0 +1,23 @@
+{% extends "_layout.html" %}
+{% block preheader %}Every approver has signed off on {{ document_filename }}.{% endblock %}
+{% block badge %}
+  <div style="display:inline-block;font-family:Consolas,'Courier New',monospace;font-size:12px;font-weight:600;letter-spacing:0.04em;color:#2f6b45;border:1.5px solid #2f6b45;padding:3px 9px;margin-bottom:12px;">APPROVED</div>
+{% endblock %}
+{% block heading %}{{ document_filename }}{% endblock %}
+{% block body %}
+  <p style="margin:0 0 12px 0;">All {{ total_steps }} approver{{ "s" if total_steps != 1 else "" }} have signed off. There's nothing left for you to do.</p>
+{% endblock %}
+{% block cta %}
+<tr>
+  <td style="padding:4px 28px 24px 28px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="background-color:#2b3a66;">
+          <a href="{{ chain_url }}" style="display:inline-block;padding:11px 22px;font-family:'Segoe UI',Arial,sans-serif;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;">View the audit trail</a>
+        </td>
+      </tr>
+    </table>
+  </td>
+</tr>
+{% endblock %}
+{% block footer %}Sent by DocuFlow on behalf of your organization.{% endblock %}
