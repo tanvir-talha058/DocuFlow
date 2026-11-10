@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
@@ -103,12 +103,6 @@ def signup(
 
     request.session[SESSION_USER_KEY] = employee.id
     return RedirectResponse(url="/", status_code=303)
-
-
-@router.get("/callback")
-def callback():
-    # Phase 2: handle MSAL authorization-code redirect here.
-    raise HTTPException(status_code=501, detail="Real Azure AD login not configured yet")
 
 
 @router.get("/logout")

@@ -19,17 +19,46 @@
     <p><a href="/documents/{{ document.id }}/download?token={{ token }}" class="icon-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>Open the document to review</a></p>
 
     <div class="signature-pane">
-      <div class="sign-line-label">Sign below to approve</div>
-      <form id="sign-form" method="post" action="/review/{{ token }}/approve">
+      <div class="sign-tabs">
+        <button type="button" class="sign-tab is-active" data-sign-tab="draw">Draw signature</button>
+        <button type="button" class="sign-tab" data-sign-tab="type">Type signature</button>
+      </div>
+
+      <div class="sign-panel" id="panel-draw">
+        <div class="sign-toolbar">
+          <div class="sign-color-picker">
+            <button type="button" class="color-dot is-active" data-color="#1e3a8a" style="background: #1e3a8a;" title="Navy Blue"></button>
+            <button type="button" class="color-dot" data-color="#0f172a" style="background: #0f172a;" title="Classic Black"></button>
+            <button type="button" class="color-dot" data-color="#2563eb" style="background: #2563eb;" title="Royal Blue"></button>
+          </div>
+          <div class="sign-width-picker">
+            <button type="button" class="width-btn" data-width="1.5" title="Fine">Fine</button>
+            <button type="button" class="width-btn is-active" data-width="2.5" title="Medium">Medium</button>
+            <button type="button" class="width-btn" data-width="4" title="Bold">Bold</button>
+          </div>
+          <button type="button" class="btn-undo" id="undo-signature" title="Undo stroke">Undo</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="clear-signature">Clear</button>
+        </div>
         <div class="signature-canvas-wrap">
           <canvas id="signature-pad" width="700" height="160"></canvas>
           <div class="sign-here-line"></div>
           <span class="sign-here-mark">&times;</span>
         </div>
-        <div class="signature-actions">
-          <button type="button" class="btn btn-ghost" id="clear-signature">Clear</button>
-          <span class="field-hint">Draw with your mouse, stylus, or finger.</span>
+        <div class="field-hint" style="margin-top: 0.4rem;">Draw with your mouse, stylus, or finger.</div>
+      </div>
+
+      <div class="sign-panel" id="panel-type" hidden>
+        <div class="field" style="margin-bottom: 0.8rem;">
+          <label for="typed-name">Type your full name</label>
+          <input type="text" id="typed-name" value="{{ customer.display_name }}" placeholder="Your legal name">
         </div>
+        <div class="typed-preview-card">
+          <span class="typed-preview-text" id="typed-preview">{{ customer.display_name }}</span>
+        </div>
+        <div class="field-hint" style="margin-top: 0.4rem;">A digital signature generated from your legal name.</div>
+      </div>
+
+      <form id="sign-form" method="post" action="/review/{{ token }}/approve" style="margin-top: 1.25rem;">
         <input type="hidden" name="signature_data_url" id="signature-data-url">
         <div class="decision-row">
           <button type="submit" class="btn btn-stamp-approve" id="approve-btn" disabled>Approve and sign</button>

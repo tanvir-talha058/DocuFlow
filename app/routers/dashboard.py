@@ -10,7 +10,7 @@ from app.models.audit import AuditEvent
 from app.models.chain import ApprovalChain, ApprovalStep, ApproverType, ChainStatus, StepStatus
 from app.models.document import Document
 from app.models.employee import EmployeeCache
-from app.services import activity, chain_engine
+from app.services import activity, chain_engine, notification_center
 from app.services.auth import get_current_user
 from app.templating import templates
 from app.timeutil import utcnow
@@ -86,7 +86,7 @@ def _build_stats(rows: list[tuple[ApprovalChain, Document]], now) -> dict:
         stats[b] = {
             "total": totals[b],
             "delta": _delta_label(this_week[b], prev_week[b]),
-            "sparkline_points": _sparkline_points(daily[b]),
+            **_sparkline(daily[b]),
         }
     return {"stats": stats, "day_labels": day_labels, "trend": daily["total"]}
 
@@ -117,24 +117,57 @@ def _document_flow(my_approvals: list, rows: list[tuple[ApprovalChain, Document]
     return {"chain": chain, "document": document, "stages": stages, "progress_pct": progress_pct, "rejected": rejected}
 
 
-def _sparkline_points(values: list[int], width: int = 90, height: int = 28) -> str:
-    """SVG polyline 'x,y ...' string for a small inline trend line."""
+def _sparkline(values: list[int], width: int = 90, height: int = 28) -> dict:
+    """Smooth SVG line + area 'd' strings for a small inline trend line."""
     if not values:
-        return ""
+        return {"line_path": "", "area_path": ""}
     lo, hi = min(values), max(values)
     span = (hi - lo) or 1
     step = width / (len(values) - 1) if len(values) > 1 else 0
-    points = []
+    pts = []
     for i, v in enumerate(values):
         x = round(i * step, 1)
         y = round(height - ((v - lo) / span) * (height - 4) - 2, 1)
-        points.append(f"{x},{y}")
-    return " ".join(points)
+        pts.append((x, y))
+
+    line_path = _smooth_path(pts)
+    curve_body = line_path.split(" ", 1)[1] if len(pts) > 1 else ""
+    area_path = f"M{pts[0][0]},{height} L{pts[0][0]},{pts[0][1]} {curve_body} L{pts[-1][0]},{height} Z"
+    return {"line_path": line_path, "area_path": area_path}
 
 
-def _trend_chart(values: list[int], labels: list[str], width: int = 600, height: int = 140, pad_x: int = 12, pad_y: int = 16) -> dict:
-    """Geometry for an SVG line/area trend chart: a polyline plus per-point
-    markers (for dots + hover titles) and a closed area path for the fill."""
+def _smooth_path(points: list[tuple[float, float]]) -> str:
+    """Cubic-Bezier path (uniform Catmull-Rom spline) that curves smoothly
+    through every point, for a more polished line/area chart than straight
+    polyline segments."""
+    if not points:
+        return ""
+    if len(points) == 1:
+        x, y = points[0]
+        return f"M{x},{y}"
+    if len(points) == 2:
+        (x0, y0), (x1, y1) = points
+        return f"M{x0},{y0} L{x1},{y1}"
+
+    commands = [f"M{points[0][0]},{points[0][1]}"]
+    for i in range(len(points) - 1):
+        p0 = points[i - 1] if i > 0 else points[i]
+        p1 = points[i]
+        p2 = points[i + 1]
+        p3 = points[i + 2] if i + 2 < len(points) else p2
+        c1x, c1y = round(p1[0] + (p2[0] - p0[0]) / 6, 1), round(p1[1] + (p2[1] - p0[1]) / 6, 1)
+        c2x, c2y = round(p2[0] - (p3[0] - p1[0]) / 6, 1), round(p2[1] - (p3[1] - p1[1]) / 6, 1)
+        commands.append(f"C{c1x},{c1y} {c2x},{c2y} {p2[0]},{p2[1]}")
+    return " ".join(commands)
+
+
+def _trend_chart(
+    values: list[int], labels: list[str], width: int = 600, height: int = 140,
+    pad_x: int = 12, pad_y: int = 16, grid_rows: int = 3,
+) -> dict:
+    """Geometry for an SVG line/area trend chart: a smooth curved line plus
+    per-point markers (for dots + hover titles), a closed area fill, and
+    horizontal reference grid lines."""
     usable_w = width - pad_x * 2
     usable_h = height - pad_y * 2
     hi = max(values, default=0) or 1
@@ -147,17 +180,29 @@ def _trend_chart(values: list[int], labels: list[str], width: int = 600, height:
         markers.append({"x": x, "y": y, "value": v, "label": labels[i] if i < len(labels) else ""})
 
     points = " ".join(f"{m['x']},{m['y']}" for m in markers)
+    pts = [(m["x"], m["y"]) for m in markers]
+    line_path = _smooth_path(pts)
+
     baseline = height - pad_y
     if markers:
+        curve_body = line_path.split(" ", 1)[1] if len(pts) > 1 else ""
         area_path = (
-            f"M{markers[0]['x']},{baseline} "
-            + " ".join(f"L{m['x']},{m['y']}" for m in markers)
+            f"M{markers[0]['x']},{baseline} L{markers[0]['x']},{markers[0]['y']} "
+            + curve_body
             + f" L{markers[-1]['x']},{baseline} Z"
         )
     else:
         area_path = ""
 
-    return {"points": points, "area_path": area_path, "markers": markers, "width": width, "height": height}
+    grid_lines = [
+        {"y": round(pad_y + (usable_h / (grid_rows + 1)) * i, 1)}
+        for i in range(1, grid_rows + 1)
+    ]
+
+    return {
+        "points": points, "line_path": line_path, "area_path": area_path, "markers": markers,
+        "width": width, "height": height, "pad_x": pad_x, "pad_y": pad_y, "grid_lines": grid_lines,
+    }
 
 
 DONUT_SEGMENTS = (
@@ -316,10 +361,8 @@ def dashboard(
             "document_flow": document_flow, "recent_activity": recent_activity,
             "storage_used_bytes": storage_used_bytes, "storage_quota_bytes": settings.storage_quota_bytes,
             "storage_pct": storage_pct, "now": now, "pending_approvals_count": len(my_approvals),
-            "notifications_preview": [
-                {"chain_id": chain.id, "title": chain.title or document.original_filename, "step_order": step.step_order}
-                for step, chain, document in my_approvals[:5]
-            ],
+            "notifications_preview": notification_center.list_recent(db, current_user.id, limit=6),
+            "unread_notifications_count": notification_center.unread_count(db, current_user.id),
             "greeting": _greeting(now), "today_label": f"{now.strftime('%b')} {now.day}, {now.year}",
         },
     )

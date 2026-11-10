@@ -256,3 +256,43 @@ def download_document(
         filename=document.original_filename,
         media_type=document.content_type,
     )
+
+
+@router.get("/chains/{chain_id}/certificate/download")
+def download_certificate(
+    chain_id: str,
+    token: str | None = None,
+    db: Session = Depends(get_db),
+    current_user: EmployeeCache | None = Depends(get_current_user_optional),
+):
+    chain = db.get(ApprovalChain, chain_id)
+    if chain is None or not chain.certificate_path:
+        raise HTTPException(status_code=404, detail="Certificate not found")
+
+    authorized = False
+    if token:
+        step = chain_engine.get_step_by_token(db, token)
+        authorized = step is not None and step.chain_id == chain.id
+    if not authorized and current_user is not None:
+        is_initiator = chain.initiator_employee_id == current_user.id
+        is_approver = (
+            db.query(ApprovalStep)
+            .filter(
+                ApprovalStep.chain_id == chain.id,
+                ApprovalStep.approver_employee_id == current_user.id,
+            )
+            .count()
+            > 0
+        )
+        authorized = is_initiator or is_approver
+
+    if not authorized:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    document = db.get(Document, chain.document_id)
+    base_name = (chain.title or document.original_filename).rsplit(".", 1)[0]
+    return FileResponse(
+        path=chain.certificate_path,
+        filename=f"{base_name} - Certificate of Completion.pdf",
+        media_type="application/pdf",
+    )

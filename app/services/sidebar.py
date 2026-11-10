@@ -7,13 +7,13 @@ from app.config import settings
 from app.models.chain import ApprovalChain, ApprovalStep, ApproverType, ChainStatus, StepStatus
 from app.models.document import Document
 from app.models.employee import EmployeeCache
+from app.services import notification_center
 
 
 def build_sidebar_context(db: Session, current_user: EmployeeCache) -> dict:
-    pending_rows = (
-        db.query(ApprovalStep, ApprovalChain, Document)
+    pending_approvals_count = (
+        db.query(ApprovalStep)
         .join(ApprovalChain, ApprovalChain.id == ApprovalStep.chain_id)
-        .join(Document, Document.id == ApprovalChain.document_id)
         .filter(
             ApprovalStep.approver_type == ApproverType.EMPLOYEE.value,
             ApprovalStep.approver_employee_id == current_user.id,
@@ -21,18 +21,11 @@ def build_sidebar_context(db: Session, current_user: EmployeeCache) -> dict:
             ApprovalChain.status == ChainStatus.IN_PROGRESS.value,
             ApprovalChain.current_step_order == ApprovalStep.step_order,
         )
-        .order_by(ApprovalChain.created_at.desc())
-        .all()
+        .count()
     )
-    pending_approvals_count = len(pending_rows)
-    notifications_preview = [
-        {
-            "chain_id": chain.id,
-            "title": chain.title or document.original_filename,
-            "step_order": step.step_order,
-        }
-        for step, chain, document in pending_rows[:5]
-    ]
+
+    notifications_preview = notification_center.list_recent(db, current_user.id, limit=6)
+    unread_notifications_count = notification_center.unread_count(db, current_user.id)
 
     sizes = (
         db.query(Document.size_bytes)
@@ -46,6 +39,7 @@ def build_sidebar_context(db: Session, current_user: EmployeeCache) -> dict:
     return {
         "pending_approvals_count": pending_approvals_count,
         "notifications_preview": notifications_preview,
+        "unread_notifications_count": unread_notifications_count,
         "storage_used_bytes": total_bytes,
         "storage_quota_bytes": quota,
         "storage_pct": storage_pct,

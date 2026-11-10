@@ -6,8 +6,16 @@
   <title>{% block title %}DocuFlow{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,500&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,500&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/style.css?v={{ static_version }}">
+  <script>
+    (function() {
+      const saved = localStorage.getItem("docuflow-theme");
+      if (saved) {
+        document.documentElement.setAttribute("data-theme", saved);
+      }
+    })();
+  </script>
 </head>
 <body>
   {% if current_user %}
@@ -23,6 +31,7 @@
           <span class="brand-logo-chip">
             <img src="/static/images/upay-logo.png?v={{ static_version }}" alt="Upay — a UCB enterprise" class="brand-logo-img">
           </span>
+          <span class="sidebar-brand-divider" aria-hidden="true"></span>
           <span class="sidebar-brand-name">DocuFlow</span>
         </a>
         <nav>
@@ -57,37 +66,60 @@
       </aside>
       <div class="app-main-col">
         <header class="topbar-v2">
-          <div class="topbar-search">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="topbar-search-icon"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-            <input type="search" id="topbar-search" placeholder="Search your routed documents&hellip;" aria-label="Search documents">
-            <kbd class="topbar-search-kbd">Ctrl K</kbd>
-          </div>
           <div class="topbar-actions">
             <div class="dropdown" data-dropdown>
               <button type="button" class="icon-btn" title="Notifications" aria-label="Notifications" aria-haspopup="true" aria-expanded="false" data-dropdown-trigger>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-                {% if pending_approvals_count %}<span class="badge-dot"></span>{% endif %}
+                {% if unread_notifications_count %}<span class="badge-count">{{ unread_notifications_count if unread_notifications_count < 10 else '9+' }}</span>{% endif %}
               </button>
-              <div class="dropdown-panel" role="menu">
-                <div class="dropdown-head">Notifications</div>
+              <div class="dropdown-panel notif-panel" role="menu">
+                <div class="notif-head">
+                  <div class="dropdown-head">Notifications</div>
+                  {% if unread_notifications_count %}
+                    <form method="post" action="/notifications/mark-all-read?next={{ request.url.path }}">
+                      <button type="submit" class="notif-mark-all">Mark all as read</button>
+                    </form>
+                  {% endif %}
+                </div>
                 {% if notifications_preview %}
-                  {% for item in notifications_preview %}
-                    <a href="/chains/{{ item.chain_id }}" class="dropdown-item">
-                      <span class="feed-dot tone-sent" aria-hidden="true"></span>
-                      <span>
-                        <strong>{{ item.title }}</strong>
-                        <span class="ref">Step {{ item.step_order }} is waiting on you</span>
-                      </span>
-                    </a>
-                  {% endfor %}
+                  <div class="notif-list">
+                    {% for n in notifications_preview %}
+                      <a href="/notifications/{{ n.id }}/open" class="notif-item{% if not n.read_at %} is-unread{% endif %}">
+                        <span class="feed-dot tone-{{ 'approved' if n.type == 'CHAIN_APPROVED' else 'rejected' if n.type == 'CHAIN_REJECTED' else 'sent' }}" aria-hidden="true"></span>
+                        <span class="notif-item-text">
+                          <span class="notif-item-title">{{ n.title }}</span>
+                          {% if n.body %}<span class="notif-item-body">{{ n.body }}</span>{% endif %}
+                          <span class="notif-item-time" data-timeago="{{ n.created_at.isoformat() }}">{{ n.created_at.strftime("%Y-%m-%d %H:%M") }}</span>
+                        </span>
+                      </a>
+                    {% endfor %}
+                  </div>
+                  <div class="notif-footer"><a href="/notifications">View all notifications</a></div>
                 {% else %}
                   <p class="dropdown-empty">You're all caught up.</p>
                 {% endif %}
               </div>
             </div>
-            <span class="icon-btn" title="Help" aria-label="Help">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a2.9 2.9 0 1 1 3.8 2.76c-.74.27-1.4.9-1.4 1.74v.3"/><path d="M12 17h.01"/></svg>
-            </span>
+            <div class="dropdown" data-dropdown>
+              <button type="button" class="icon-btn" title="Help" aria-label="Help" aria-haspopup="true" aria-expanded="false" data-dropdown-trigger>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a2.9 2.9 0 1 1 3.8 2.76c-.74.27-1.4.9-1.4 1.74v.3"/><path d="M12 17h.01"/></svg>
+              </button>
+              <div class="dropdown-panel help-panel" role="menu">
+                <div class="dropdown-head">Need a hand?</div>
+                <p class="help-panel-text">Running into a bug, a stuck approval, or anything else odd — reach out and I'll sort it out.</p>
+                <a href="mailto:tanvir_ahmed@upaybd.com" class="dropdown-item">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                  <span>
+                    <strong>Md. Tanvir Ahmed</strong>
+                    <span class="ref">tanvir_ahmed@upaybd.com</span>
+                  </span>
+                </a>
+              </div>
+            </div>
+            <button type="button" class="icon-btn theme-toggle-btn" id="theme-toggle-btn" title="Toggle theme (Light / Dark)" aria-label="Toggle theme">
+              <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+              <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
             <div class="user-menu">
               <span class="avatar" style="background: {{ current_user.display_name|avatar_color }};" title="{{ current_user.display_name }}">{{ current_user.display_name|initials }}</span>
               <span class="user-meta">
@@ -134,5 +166,22 @@
   {% endif %}
   <script src="/static/js/app.js?v={{ static_version }}"></script>
   {% block scripts %}{% endblock %}
+
+  <!-- Spotlight Command Palette -->
+  <div class="command-palette-backdrop" id="command-palette" hidden>
+    <div class="command-palette-modal" role="dialog" aria-modal="true" aria-label="Command Palette">
+      <div class="command-palette-search-wrap">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="cmd-icon"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="cmd-input" placeholder="Type a command or search documents..." autocomplete="off" spellcheck="false">
+        <kbd class="cmd-esc-kbd">ESC</kbd>
+      </div>
+      <div class="cmd-results" id="cmd-results"></div>
+      <div class="cmd-footer">
+        <span><kbd>&uarr;&darr;</kbd> Navigate</span>
+        <span><kbd>&crarr;</kbd> Select</span>
+        <span><kbd>ESC</kbd> Close</span>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

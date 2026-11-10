@@ -1,7 +1,6 @@
-"""Mail delivery provider selection, independent of the Graph directory
-lookup (app.services.directory / graph_client.search_users). Notifications
-should call get_mail_client() rather than reaching into graph_client
-directly, so switching providers is a config change, not a code change."""
+"""Mail delivery provider selection. Call get_mail_client() rather than
+reaching into a specific client directly, so switching providers is a
+config change (MAIL_PROVIDER), not a code change."""
 
 from typing import Protocol
 
@@ -13,18 +12,11 @@ class MailClient(Protocol):
 
 
 def get_mail_client() -> MailClient:
-    provider = settings.mail_provider
-
-    if provider == "smtp":
+    if settings.mail_provider == "smtp":
         from app.services.smtp_client import SmtpMailClient
 
         return SmtpMailClient()
 
-    if provider == "graph":
-        from app.services.graph_client import GraphClient
+    from app.services.mail_fake import FakeMailClient
 
-        return GraphClient()
-
-    from app.services.graph_client_fake import FakeGraphClient
-
-    return FakeGraphClient()
+    return FakeMailClient()

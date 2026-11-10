@@ -2,11 +2,11 @@ from app.config import settings
 from app.services.mail import get_mail_client
 
 
-def test_default_provider_is_fake_graph_client():
+def test_default_provider_is_fake_mail_client():
     assert settings.mail_provider == "fake"
-    from app.services.graph_client_fake import FakeGraphClient
+    from app.services.mail_fake import FakeMailClient
 
-    assert isinstance(get_mail_client(), FakeGraphClient)
+    assert isinstance(get_mail_client(), FakeMailClient)
 
 
 def test_smtp_provider_selects_smtp_client(monkeypatch):

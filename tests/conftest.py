@@ -4,6 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.database import Base
+import app.models  # noqa: F401  (import side effect: registers all models)
 from app.models.document import Document
 from app.models.employee import EmployeeCache
 
@@ -56,14 +57,11 @@ def document(db_session, employees):
 
 
 @pytest.fixture(autouse=True)
-def fake_graph(monkeypatch):
-    """Route all graph_client calls through FakeGraphClient during tests."""
-    from app.config import settings
-
-    monkeypatch.setattr(settings, "use_fake_graph", True)
-    # Use a tmp outbox path isolated per test run to avoid cross-test pollution.
-    import app.services.graph_client_fake as fake_module
+def fake_mail(monkeypatch):
+    """Use a tmp outbox path isolated per test run to avoid cross-test pollution."""
     import pathlib
+
+    import app.services.mail_fake as fake_module
 
     monkeypatch.setattr(fake_module, "DEV_OUTBOX_PATH", pathlib.Path("test_dev_outbox.json"))
     yield

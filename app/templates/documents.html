@@ -9,9 +9,15 @@
 
   {% if documents %}
     <div class="toolbar-v2">
-      <input type="search" id="doc-search" placeholder="Search by filename&hellip;" aria-label="Search documents">
+      <div class="doc-search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="doc-search-icon"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="search" id="doc-search" placeholder="Search by filename&hellip;" aria-label="Search documents" autocomplete="off">
+        <button type="button" class="doc-search-clear" id="doc-search-clear" title="Clear search" aria-label="Clear search" hidden>&times;</button>
+      </div>
+      <span class="doc-search-count" id="doc-search-count"></span>
     </div>
 
+    <div class="table-scroll">
     <table id="doc-table">
       <thead>
         <tr><th>Document</th><th>Type</th><th>Size</th><th>Uploaded</th><th>Chain status</th><th></th></tr>
@@ -19,7 +25,15 @@
       <tbody>
         {% for document, chain in documents %}
         <tr data-filename="{{ document.original_filename|lower }}">
-          <td>{{ document.original_filename }}</td>
+          <td>
+            <div class="doc-cell">
+              {% set ext = document.original_filename.split(".")[-1].lower() if "." in document.original_filename else "file" %}
+              <span class="file-badge file-badge-{{ ext }}">{{ ext|upper }}</span>
+              <div class="doc-cell-info">
+                <span class="doc-title-text">{{ document.original_filename }}</span>
+              </div>
+            </div>
+          </td>
           <td class="ref">{{ document.content_type }}</td>
           <td class="ref">{{ document.size_bytes|filesizeformat }}</td>
           <td class="ref">{{ document.uploaded_at.strftime("%Y-%m-%d %H:%M") }}</td>
@@ -31,13 +45,27 @@
             {% endif %}
           </td>
           <td>
-            <a href="/documents/{{ document.id }}/download">Download</a>
-            {% if chain %} · <a href="/chains/{{ chain.id }}">Open</a>{% endif %}
+            <div class="table-actions-group">
+              <a href="/documents/{{ document.id }}/download" class="table-action-link" title="Download">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>
+                Download
+              </a>
+              {% if chain and chain.certificate_path %}
+                <a href="/chains/{{ chain.id }}/certificate/download" class="table-action-link" title="Download Certificate of Completion">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+                  Certificate
+                </a>
+              {% endif %}
+              {% if chain %}
+                <a href="/chains/{{ chain.id }}" class="table-action-pill">Open &rarr;</a>
+              {% endif %}
+            </div>
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
+    </div>
     <p id="no-doc-results" class="field-hint" hidden>No documents match your search.</p>
   {% else %}
     <div class="empty-state">
@@ -50,8 +78,11 @@
 <script>
 (function () {
   const searchInput = document.getElementById("doc-search");
+  const clearBtn = document.getElementById("doc-search-clear");
+  const countLabel = document.getElementById("doc-search-count");
   const rows = Array.from(document.querySelectorAll("#doc-table tbody tr"));
   const noResults = document.getElementById("no-doc-results");
+  const total = rows.length;
 
   function applyFilter() {
     const query = (searchInput?.value || "").trim().toLowerCase();
@@ -62,9 +93,24 @@
       if (show) visible += 1;
     });
     if (noResults) noResults.hidden = visible !== 0;
+    if (clearBtn) clearBtn.hidden = !query;
+    if (countLabel) countLabel.textContent = query ? `${visible} of ${total} documents` : "";
   }
 
   searchInput?.addEventListener("input", applyFilter);
+  searchInput?.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && searchInput.value) {
+      searchInput.value = "";
+      applyFilter();
+    }
+  });
+
+  clearBtn?.addEventListener("click", () => {
+    if (!searchInput) return;
+    searchInput.value = "";
+    applyFilter();
+    searchInput.focus();
+  });
 
   const topbarSearch = document.getElementById("topbar-search");
   topbarSearch?.addEventListener("input", () => {

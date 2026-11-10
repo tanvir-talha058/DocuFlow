@@ -13,6 +13,9 @@
     {% endif %}
   </p>
   <p><a href="/documents/{{ document.id }}/download" class="icon-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>Download the document</a></p>
+  {% if chain.certificate_path %}
+  <p><a href="/chains/{{ chain.id }}/certificate/download" class="icon-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Download Certificate of Completion</a></p>
+  {% endif %}
 
   {% if chain.message %}
     <div class="chain-message">{{ chain.message }}</div>

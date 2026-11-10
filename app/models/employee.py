@@ -15,7 +15,7 @@ def _uuid() -> str:
 
 
 class EmployeeCache(Base):
-    """Local mirror of an Entra ID (Azure AD) user, refreshed on search/login."""
+    """Local employee directory record."""
 
     __tablename__ = "employee_cache"
 
@@ -27,10 +27,9 @@ class EmployeeCache(Base):
     department: Mapped[str | None] = mapped_column(String(255), nullable=True)
     last_synced_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
-    # User-editable preferences (Settings page), not synced from Entra.
+    # User-editable preferences (Settings page).
     theme_preference: Mapped[str] = mapped_column(String(10), default="system", server_default="system")
     notify_on_decision: Mapped[bool] = mapped_column(Boolean, default=True, server_default="1")
 
-    # Local email+password account, used until real Azure AD/Entra SSO is
-    # wired up. Null until the employee signs up.
+    # Local email+password account. Null until the employee signs up.
     password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)

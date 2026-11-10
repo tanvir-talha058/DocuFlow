@@ -2,9 +2,6 @@
 
 Employees sign up and log in with a work email (restricted to
 `settings.allowed_email_domain`) and a password — see `app/routers/auth.py`.
-This stands in for a future Azure AD/Entra SSO integration, behind the same
-`get_current_user` dependency shape, so swapping it in later doesn't change
-any route that depends on `get_current_user`.
 """
 
 from fastapi import Depends, HTTPException, Request

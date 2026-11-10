@@ -8,8 +8,9 @@ from app.models.chain import ApprovalChain, ApprovalStep, ApproverType, ChainSta
 from app.models.customer import Customer
 from app.models.document import Document
 from app.models.employee import EmployeeCache
+from app.models.notification import NotificationType
 from app.models.signature import SignatureRecord
-from app.services import notifications, pdf_signing
+from app.services import certificate, notification_center, notifications, pdf_signing
 from app.services.tokens import generate_token, hash_token
 from app.timeutil import utcnow as _now
 
@@ -135,6 +136,14 @@ def _activate_step(db: Session, *, chain: ApprovalChain, step: ApprovalStep) -> 
         title=chain.title,
         message=chain.message,
     )
+
+    if step.approver_type == ApproverType.EMPLOYEE.value:
+        notification_center.notify(
+            db, employee_id=step.approver_employee_id, type=NotificationType.APPROVAL_REQUESTED.value,
+            title=f"{initiator.display_name} sent you \"{chain.title or document.original_filename}\" to review",
+            body=f"Step {step.step_order} of {total}",
+            link=f"/chains/{chain.id}", chain_id=chain.id,
+        )
 
 
 def reissue_token(db: Session, step: ApprovalStep) -> str:
@@ -280,6 +289,26 @@ def approve_step(db: Session, step: ApprovalStep, *, signature_data_url: str | N
 
         initiator = db.get(EmployeeCache, chain.initiator_employee_id)
         document = db.get(Document, chain.document_id)
+
+        all_steps = (
+            db.query(ApprovalStep)
+            .filter(ApprovalStep.chain_id == chain.id)
+            .order_by(ApprovalStep.step_order)
+            .all()
+        )
+        steps_with_approvers = [(s, resolve_approver(db, s)) for s in all_steps]
+        chain.certificate_path = certificate.generate_certificate(
+            chain=chain, document=document, steps_with_approvers=steps_with_approvers,
+        )
+        db.flush()
+
+        notification_center.notify(
+            db, employee_id=initiator.id, type=NotificationType.CHAIN_APPROVED.value,
+            title=f"\"{chain.title or document.original_filename}\" was fully approved",
+            body="All approvers have signed off. The certificate of completion is ready.",
+            link=f"/chains/{chain.id}", chain_id=chain.id,
+        )
+
         if initiator.notify_on_decision:
             notifications.send_completed_notice(
                 initiator_email=initiator.email,
@@ -319,6 +348,14 @@ def reject_step(db: Session, step: ApprovalStep, reason: str) -> None:
 
     initiator = db.get(EmployeeCache, chain.initiator_employee_id)
     document = db.get(Document, chain.document_id)
+
+    notification_center.notify(
+        db, employee_id=initiator.id, type=NotificationType.CHAIN_REJECTED.value,
+        title=f"\"{chain.title or document.original_filename}\" was rejected",
+        body=f"{rejector.display_name} rejected step {step.step_order}: {reason}",
+        link=f"/chains/{chain.id}", chain_id=chain.id,
+    )
+
     if initiator.notify_on_decision:
         notifications.send_rejected_notice(
             initiator_email=initiator.email,

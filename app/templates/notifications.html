@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Notifications - DocuFlow{% endblock %}
+{% block content %}
+  <div class="page-header">
+    <h1>Notifications</h1>
+    {% if unread_notifications_count %}
+    <form method="post" action="/notifications/mark-all-read">
+      <button type="submit" class="btn btn-secondary">Mark all as read</button>
+    </form>
+    {% endif %}
+  </div>
+
+  {% if items %}
+    <ul class="feed">
+      {% for n in items %}
+      <li class="feed-row{% if not n.read_at %} is-unread{% endif %}">
+        <span class="feed-dot tone-{{ 'approved' if n.type == 'CHAIN_APPROVED' else 'rejected' if n.type == 'CHAIN_REJECTED' else 'sent' }}"></span>
+        <div class="feed-body">
+          <a href="/notifications/{{ n.id }}/open" class="feed-label">{{ n.title }}</a>
+          {% if n.body %}<div class="feed-detail">{{ n.body }}</div>{% endif %}
+          <div class="feed-time" data-timeago="{{ n.created_at.isoformat() }}">{{ n.created_at.strftime("%Y-%m-%d %H:%M") }}</div>
+        </div>
+        {% if not n.read_at %}<span class="badge-dot" style="position: static; margin-top: 0.4rem;"></span>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="empty-state">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="color: var(--ink-faint); margin-bottom: 0.5rem;"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+      <p>No notifications yet.</p>
+    </div>
+  {% endif %}
+{% endblock %}

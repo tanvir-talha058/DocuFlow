@@ -55,17 +55,33 @@ const dropzone = document.getElementById("dropzone");
 const dropzoneText = document.getElementById("dropzone-text");
 const dropzoneFilename = document.getElementById("dropzone-filename");
 
+function formatBytes(bytes) {
+  if (!bytes) return "0 B";
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+
 function updateDropzone() {
   const file = fileInput.files && fileInput.files[0];
   if (file) {
     dropzone.classList.add("has-file");
     dropzoneText.hidden = true;
     dropzoneFilename.hidden = false;
-    dropzoneFilename.textContent = file.name;
+    const ext = (file.name.split(".").pop() || "FILE").toUpperCase();
+    dropzoneFilename.innerHTML = `
+      <div class="dropzone-file-pill">
+        <span class="file-ext-badge">${ext}</span>
+        <span class="file-name-text">${file.name}</span>
+        <span class="file-size-text">(${formatBytes(file.size)})</span>
+        <span class="file-change-hint">Click or drop to replace</span>
+      </div>
+    `;
   } else {
     dropzone.classList.remove("has-file");
     dropzoneText.hidden = false;
     dropzoneFilename.hidden = true;
+    dropzoneFilename.innerHTML = "";
   }
 }
 
@@ -107,7 +123,20 @@ function wireRow(row) {
     list.hidden = false;
     employees.forEach((emp) => {
       const item = document.createElement("div");
-      item.textContent = `${emp.display_name} (${emp.email})`;
+      item.className = "suggestion-item";
+      const initials = (emp.display_name || "?")
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(p => p[0].toUpperCase())
+        .join("");
+      item.innerHTML = `
+        <span class="suggestion-avatar">${initials}</span>
+        <div class="suggestion-details">
+          <strong class="suggestion-name">${emp.display_name}</strong>
+          <span class="suggestion-email">${emp.email}</span>
+        </div>
+      `;
       item.addEventListener("mousedown", (e) => {
         e.preventDefault();
         search.value = `${emp.display_name} (${emp.email})`;

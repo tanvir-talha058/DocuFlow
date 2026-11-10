@@ -1,12 +1,18 @@
-"""Seed EmployeeCache with the fake directory used by FakeGraphClient, for local dev.
+"""Seed EmployeeCache with a small fake directory, for local dev.
 
 Run with: python -m scripts.seed_fake_directory
 """
 
 from app.database import Base, SessionLocal, engine
 from app.models.employee import EmployeeCache
-from app.services.graph_client_fake import FAKE_DIRECTORY
 from app.timeutil import utcnow
+
+FAKE_DIRECTORY = [
+    {"id": "fake-001", "displayName": "Alice Rahman", "mail": "alice@example.com", "jobTitle": "Finance Manager", "department": "Finance"},
+    {"id": "fake-002", "displayName": "Bilal Hossain", "mail": "bilal@example.com", "jobTitle": "Engineering Lead", "department": "Engineering"},
+    {"id": "fake-003", "displayName": "Chitra Das", "mail": "chitra@example.com", "jobTitle": "Legal Counsel", "department": "Legal"},
+    {"id": "fake-004", "displayName": "Dawood Karim", "mail": "dawood@example.com", "jobTitle": "CEO", "department": "Executive"},
+]
 
 
 def main():

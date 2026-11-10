@@ -23,7 +23,7 @@ DEFAULT_PATH = "employees.xlsx"
 
 
 def _entra_object_id_for(email: str) -> str:
-    """A stable fake id for rows that don't have a real Azure AD object id yet."""
+    """A stable unique id for rows imported from the spreadsheet."""
     return f"xlsx:{email.lower()}"
 
 

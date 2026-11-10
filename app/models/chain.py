@@ -56,6 +56,9 @@ class ApprovalChain(Base):
     rejected_by_customer_id: Mapped[str | None] = mapped_column(
         String(36), ForeignKey("customers.id"), nullable=True
     )
+    # System-generated "Certificate of Completion" PDF, written once the last
+    # step is approved. Null until then.
+    certificate_path: Mapped[str | None] = mapped_column(String(1000), nullable=True)
 
 
 class ApprovalStep(Base):

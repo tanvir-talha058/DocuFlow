@@ -1,17 +1,25 @@
-INFO:     Started server process [16012]
+INFO:     Will watch for changes in these directories: ["D:\\Tanvir's Projects\\DocuFlow"]
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [22288] using WatchFiles
+INFO:     Started server process [22136]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
-INFO:     127.0.0.1:56622 - "GET / HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:57043 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57043 - "GET /static/css/style.css?v=1793785385 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:61789 - "GET /static/images/upay-logo.png?v=1793785385 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:62127 - "GET /static/js/app.js?v=1793785385 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49798 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49798 - "GET /static/css/style.css?v=1793785385 HTTP/1.1" 304 Not Modified
-INFO:     127.0.0.1:56300 - "GET /static/js/app.js?v=1793785385 HTTP/1.1" 304 Not Modified
-INFO:     127.0.0.1:56300 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:62134 - "GET /chains/e6c944fd-233b-409c-aab9-f6ec73661def HTTP/1.1" 200 OK
-INFO:     127.0.0.1:62134 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:62134 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:62134 - "GET /settings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57542 - "GET / HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:55498 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55498 - "GET /static/css/style.css?v=1793872982 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62113 - "GET /static/js/app.js?v=1793872982 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63150 - "GET /static/images/upay-logo.png?v=1793872982 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56640 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56640 - "GET /static/css/style.css?v=1793872982 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54518 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54518 - "GET /static/css/style.css?v=1793872982 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:62781 - "GET /login HTTP/1.1" 404 Not Found
+WARNING:  WatchFiles detected changes in 'scripts\upgrade_charts.py'. Reloading...
+INFO:     127.0.0.1:57742 - "GET /login HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:64777 - "GET /login HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58639 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58639 - "GET /static/css/style.css?v=1793872982 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57225 - "GET /static/js/app.js?v=1793872982 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58639 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:60485 - "GET /chains/00d15d9b-e58a-4cd0-b09e-34a6ae2a6db1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60485 - "GET / HTTP/1.1" 200 OK

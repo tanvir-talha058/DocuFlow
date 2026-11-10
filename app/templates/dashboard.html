@@ -23,8 +23,11 @@
       <div class="stat-value-v2" data-count-to="{{ s.total }}">{{ s.total }}</div>
       <div class="stat-label-v2">{{ label }}</div>
       <div class="stat-delta-v2">{{ s.delta }}</div>
-      <svg class="stat-sparkline" width="90" height="28" viewBox="0 0 90 28">
-        <polyline points="{{ s.sparkline_points }}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <svg class="stat-sparkline" width="100" height="36" viewBox="0 0 100 36">
+        {% if s.area_path %}
+          <path d="{{ s.area_path }}" fill="currentColor" opacity="0.14"/>
+        {% endif %}
+        <path d="{{ s.line_path }}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </button>
     {% endfor %}
@@ -93,7 +96,6 @@
 
   {% if chains %}
     <div class="toolbar-v2">
-      <input type="search" id="chain-search" placeholder="Search by title or filename&hellip;" aria-label="Search documents">
       <select id="status-filter" aria-label="Filter by status">
         <option value="all">Status: All</option>
         <option value="PENDING,IN_PROGRESS">In Progress</option>
@@ -102,6 +104,7 @@
       </select>
     </div>
 
+    <div class="table-scroll">
     <table id="chain-table">
       <thead>
         <tr><th>Document</th><th>Status</th><th>Seen by</th><th>Last activity</th><th>Sent</th><th></th></tr>
@@ -111,8 +114,14 @@
         {% set track = tracking.get(chain.id) %}
         <tr data-status="{{ chain.status }}" data-filename="{{ ((chain.title or '') ~ ' ' ~ document.original_filename)|lower }}" data-href="/chains/{{ chain.id }}">
           <td>
-            {{ chain.title or document.original_filename }}
-            {% if chain.title %}<div class="ref">{{ document.original_filename }}</div>{% endif %}
+            <div class="doc-cell">
+              {% set ext = document.original_filename.split(".")[-1].lower() if "." in document.original_filename else "file" %}
+              <span class="file-badge file-badge-{{ ext }}">{{ ext|upper }}</span>
+              <div class="doc-cell-info">
+                <span class="doc-title-text">{{ chain.title or document.original_filename }}</span>
+                {% if chain.title %}<span class="ref doc-filename">{{ document.original_filename }}</span>{% endif %}
+              </div>
+            </div>
           </td>
           <td><span class="stamp stamp-{{ chain.status }}">{{ chain.status.replace("_", " ") }}</span></td>
           <td>
@@ -143,11 +152,12 @@
             {% else %}—{% endif %}
           </td>
           <td class="ref">{{ chain.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
-          <td><a href="/chains/{{ chain.id }}">Open</a></td>
+          <td><a href="/chains/{{ chain.id }}" class="table-action-pill">Open &rarr;</a></td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
+    </div>
     <p id="no-results-msg" class="field-hint" hidden>No documents match your search.</p>
   {% else %}
     <div class="empty-state">
@@ -157,61 +167,90 @@
   {% endif %}
 
   {% if chains %}
-  <div class="dash-row-2" style="margin-top: 1.5rem;">
-    <div class="panel">
+  <div class="dash-charts-row">
+    <!-- Documents by Status Panel -->
+    <div class="panel chart-panel">
       <div class="panel-head">
         <div>
-          <div class="panel-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6.4 6.4"/></svg>Documents by Status</div>
-          <div class="panel-sub">All time.</div>
+          <div class="panel-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6.4 6.4"/></svg>Documents by Status</div>
+          <div class="panel-sub">Breakdown across all routed documents</div>
         </div>
       </div>
-      <div class="donut-row">
-        <svg width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="Documents by status">
-          <circle cx="70" cy="70" r="54" fill="none" stroke="var(--rule)" stroke-width="16"/>
-          {% for seg in donut %}
-            {% if seg.count > 0 %}
-            <circle cx="70" cy="70" r="54" fill="none" stroke="var({{ seg.color_var }})" stroke-width="16"
-                    stroke-dasharray="{{ seg.dasharray }}" stroke-dashoffset="{{ seg.dashoffset }}"
-                    transform="rotate(-90 70 70)" stroke-linecap="butt">
-              <title>{{ seg.label }}: {{ seg.count }} ({{ seg.pct }}%)</title>
-            </circle>
-            {% endif %}
-          {% endfor %}
-          <text x="70" y="66" text-anchor="middle" font-size="22" font-weight="700" fill="var(--ink)">{{ donut_total }}</text>
-          <text x="70" y="84" text-anchor="middle" font-size="11" fill="var(--ink-faint)">Total</text>
-        </svg>
-        <ul class="donut-legend">
-          {% for seg in donut %}
-          <li><span class="donut-dot" style="background: var({{ seg.color_var }});"></span>{{ seg.label }}<strong>{{ seg.count }} ({{ seg.pct }}%)</strong></li>
-          {% endfor %}
-        </ul>
+      <div class="donut-container">
+        <div class="donut-chart-wrap">
+          <svg width="150" height="150" viewBox="0 0 150 150" class="donut-svg" role="img" aria-label="Documents by status">
+            <circle cx="75" cy="75" r="54" fill="none" stroke="var(--rule)" stroke-width="14" class="donut-bg-track"/>
+            {% for seg in donut %}
+              {% if seg.count > 0 %}
+              <circle cx="75" cy="75" r="54" fill="none" stroke="var({{ seg.color_var }})" stroke-width="14"
+                      stroke-dasharray="{{ seg.dasharray }}" stroke-dashoffset="{{ seg.dashoffset }}"
+                      transform="rotate(-90 75 75)" stroke-linecap="round" class="donut-segment" data-segment-idx="{{ loop.index0 }}">
+                <title>{{ seg.label }}: {{ seg.count }} ({{ seg.pct }}%)</title>
+              </circle>
+              {% endif %}
+            {% endfor %}
+          </svg>
+          <div class="donut-center-badge">
+            <span class="donut-center-count" data-count-to="{{ donut_total }}">{{ donut_total }}</span>
+            <span class="donut-center-label">Total</span>
+          </div>
+        </div>
+        <div class="donut-legend-wrap">
+          <ul class="donut-legend">
+            {% for seg in donut %}
+            <li class="donut-legend-item" data-segment-idx="{{ loop.index0 }}">
+              <div class="donut-legend-header">
+                <span class="donut-dot" style="background: var({{ seg.color_var }});"></span>
+                <span class="donut-legend-name">{{ seg.label }}</span>
+                <strong class="donut-legend-val">{{ seg.count }} <span class="donut-legend-pct">({{ seg.pct }}%)</span></strong>
+              </div>
+              <div class="donut-bar-track">
+                <div class="donut-bar-fill" style="width: {{ seg.pct }}%; background: var({{ seg.color_var }});"></div>
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
       </div>
     </div>
 
-    <div class="panel">
+    <!-- Activity Trend Panel -->
+    <div class="panel chart-panel">
       <div class="panel-head">
         <div>
-          <div class="panel-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Activity Trend</div>
-          <div class="panel-sub">Document activity over the last 7 days.</div>
+          <div class="panel-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Activity Trend</div>
+          <div class="panel-sub">Daily document routing activity over the last 7 days</div>
         </div>
       </div>
-      <div class="trend-chart-wrap" data-trend-wrap>
-        <svg class="trend-chart" viewBox="0 0 {{ trend_chart.width }} {{ trend_chart.height }}" preserveAspectRatio="none" role="img" aria-label="Document activity over the last 7 days">
-          <path d="{{ trend_chart.area_path }}" class="trend-chart-area" data-trend-area/>
-          <polyline points="{{ trend_chart.points }}" class="trend-chart-line" data-trend-line/>
-          <line class="trend-chart-crosshair" data-trend-crosshair y1="0" y2="{{ trend_chart.height }}" x1="0" x2="0" hidden/>
-          {% for m in trend_chart.markers %}
-            <circle cx="{{ m.x }}" cy="{{ m.y }}" r="3" class="trend-chart-dot" data-trend-dot></circle>
-            <circle cx="{{ m.x }}" cy="{{ m.y }}" r="14" class="trend-chart-hit" data-trend-hit data-x="{{ m.x }}" data-value="{{ m.value }}" data-label="{{ m.label }}" fill="transparent"></circle>
-          {% endfor %}
-        </svg>
-        <div class="trend-chart-tooltip" data-trend-tooltip hidden>
-          <span data-trend-tooltip-label></span>
-          <strong data-trend-tooltip-value></strong>
+      <div class="trend-chart-card">
+        <div class="trend-chart-wrap" data-trend-wrap>
+          <svg class="trend-chart" viewBox="0 0 {{ trend_chart.width }} {{ trend_chart.height }}" preserveAspectRatio="none" role="img" aria-label="Document activity over the last 7 days">
+            <defs>
+              <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--ink-blue)" stop-opacity="0.25"/>
+                <stop offset="100%" stop-color="var(--ink-blue)" stop-opacity="0.0"/>
+              </linearGradient>
+            </defs>
+            <!-- Background reference grid lines -->
+            {% for grid in trend_chart.grid_lines %}
+              <line x1="{{ trend_chart.pad_x }}" y1="{{ grid.y }}" x2="{{ trend_chart.width - trend_chart.pad_x }}" y2="{{ grid.y }}" class="trend-grid-line"/>
+            {% endfor %}
+            <path d="{{ trend_chart.area_path }}" class="trend-chart-area" data-trend-area fill="url(#trendGradient)"/>
+            <path d="{{ trend_chart.line_path or trend_chart.points }}" class="trend-chart-line" data-trend-line/>
+            <line class="trend-chart-crosshair" data-trend-crosshair y1="{{ trend_chart.pad_y }}" y2="{{ trend_chart.height - trend_chart.pad_y }}" x1="0" x2="0" hidden/>
+            {% for m in trend_chart.markers %}
+              <circle cx="{{ m.x }}" cy="{{ m.y }}" r="4" class="trend-chart-dot" data-trend-dot></circle>
+              <circle cx="{{ m.x }}" cy="{{ m.y }}" r="18" class="trend-chart-hit" data-trend-hit data-x="{{ m.x }}" data-value="{{ m.value }}" data-label="{{ m.label }}" fill="transparent"></circle>
+            {% endfor %}
+          </svg>
+          <div class="trend-chart-tooltip" data-trend-tooltip hidden>
+            <span data-trend-tooltip-label></span>
+            <strong data-trend-tooltip-value></strong>
+          </div>
         </div>
-      </div>
-      <div class="trend-chart-labels">
-        {% for m in trend_chart.markers %}<span>{{ m.label.split(" ")[1] }}</span>{% endfor %}
+        <div class="trend-chart-labels">
+          {% for m in trend_chart.markers %}<span>{{ m.label.split(" ")[1] }}</span>{% endfor %}
+        </div>
       </div>
     </div>
   </div>
@@ -245,7 +284,7 @@
 {% block scripts %}
 <script>
 (function () {
-  const searchInput = document.getElementById("chain-search");
+  const topbarSearch = document.getElementById("topbar-search");
   const statusFilter = document.getElementById("status-filter");
   const statCards = Array.from(document.querySelectorAll("#stat-grid .stat-card-v2"));
   const rows = Array.from(document.querySelectorAll("#chain-table tbody tr"));
@@ -258,7 +297,7 @@
   }
 
   function applyFilters() {
-    const query = (searchInput?.value || "").trim().toLowerCase();
+    const query = (topbarSearch?.value || "").trim().toLowerCase();
     const filter = statusFilter?.value || "all";
     let visible = 0;
     rows.forEach((row) => {
@@ -271,18 +310,11 @@
     if (noResults) noResults.hidden = visible !== 0;
   }
 
-  searchInput?.addEventListener("input", applyFilters);
   statusFilter?.addEventListener("change", () => setFilter(statusFilter.value));
   statCards.forEach((card) => card.addEventListener("click", () => setFilter(card.dataset.filter)));
 
-  // The topbar search also filters this table, so Ctrl+K -> type -> see results works from anywhere on the page.
-  const topbarSearch = document.getElementById("topbar-search");
-  topbarSearch?.addEventListener("input", () => {
-    if (searchInput) {
-      searchInput.value = topbarSearch.value;
-      applyFilters();
-    }
-  });
+  // The topbar search filters this table live, so typing there works from anywhere on the page.
+  topbarSearch?.addEventListener("input", applyFilters);
 })();
 </script>
 {% endblock %}
