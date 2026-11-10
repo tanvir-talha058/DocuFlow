@@ -1,38 +1,44 @@
 {% extends "base.html" %}
+{% from "_review_parts.html" import review_header, steps_tracker, doc_preview, choice_buttons, reject_panel %}
 {% block title %}Review document - DocuFlow{% endblock %}
 {% block content %}
-  <h1 class="doc-title">{{ chain.title or document.original_filename }}</h1>
-  {% if chain.title %}<p class="ref" style="margin-top: -1rem;">{{ document.original_filename }}</p>{% endif %}
-  <p class="review-meta">
-    Sent by <strong>{{ initiator.display_name }}</strong>.
-    You're reviewer {{ step.step_order }} in this chain.
-  </p>
+<div class="rv-page" data-review-page>
+  {{ review_header(chain, document, initiator, step, "reviewer", steps_overview|length) }}
 
-  {% if chain.message %}
-    <div class="chain-message">{{ chain.message }}</div>
-  {% endif %}
+  {% if error %}<div class="error-banner">{{ error }}</div>{% endif %}
 
-  <div class="dossier">
-    <span class="dossier-tab">STEP {{ step.step_order }}</span>
-    <p><a href="/documents/{{ document.id }}/download?token={{ token }}" class="icon-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>Open the document</a></p>
+  {{ doc_preview(document, token, can_preview, is_image) }}
 
-    <div class="decision-row">
-      <form method="post" action="/review/{{ token }}/approve">
-        <button type="submit" class="btn btn-stamp-approve">Approve</button>
-      </form>
-      <form method="post" action="/review/{{ token }}/reject" class="decision-row" style="margin:0; flex:1;" data-confirm-reject>
-        <input type="text" name="reason" class="reject-reason" placeholder="Reason for rejecting" required>
-        <button type="submit" class="btn btn-stamp-reject">Reject</button>
+  {{ steps_tracker(steps_overview) }}
+
+  <section class="rv-card rv-decide" aria-labelledby="decide-title">
+    <div class="rv-card-head">
+      <h2 class="rv-section-title" id="decide-title">Your decision</h2>
+      <span class="rv-muted rv-hide-sm">Press A or R to choose</span>
+    </div>
+
+    {{ choice_buttons("Pass it to " ~ next_approver_name if next_approver_name else "Complete the approval") }}
+
+    <div class="rv-panel rv-panel-approve" data-panel="approve" hidden>
+      <form method="post" action="/review/{{ token }}/approve" data-approve-form>
+        <label class="rv-check">
+          <input type="checkbox" data-ack>
+          <span>I've reviewed <strong>{{ document.original_filename }}</strong> and approve it.</span>
+        </label>
+        <p class="rv-muted rv-next">
+          {% if next_approver_name %}{{ next_approver_name }} will be emailed to review it next.{% else %}You're the last approver. {{ initiator.display_name }} will be told it's fully approved.{% endif %}
+        </p>
+        <div class="rv-actions">
+          <button type="button" class="btn btn-ghost" data-choice-cancel>Cancel</button>
+          <button type="submit" class="btn rv-btn-approve" data-approve-submit disabled>Confirm approval</button>
+        </div>
       </form>
     </div>
-  </div>
+
+    {{ reject_panel(token) }}
+  </section>
+</div>
 {% endblock %}
 {% block scripts %}
-<script>
-  document.querySelectorAll("[data-confirm-reject]").forEach((form) => {
-    form.addEventListener("submit", (e) => {
-      if (!confirm("Reject this document? This cannot be undone.")) e.preventDefault();
-    });
-  });
-</script>
+<script src="/static/js/review.js?v={{ static_version }}"></script>
 {% endblock %}

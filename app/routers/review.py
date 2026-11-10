@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.chain import ApprovalChain, ApproverType
+from app.models.chain import ApprovalChain, ApprovalStep, ApproverType
 from app.models.customer import Customer
 from app.models.document import Document
 from app.models.employee import EmployeeCache
@@ -28,6 +28,37 @@ def _chain_context(db: Session, step):
     return chain, document, initiator
 
 
+_PREVIEWABLE_PREFIXES = ("image/",)
+_PREVIEWABLE_TYPES = {"application/pdf"}
+
+
+def _review_extras(db: Session, chain: ApprovalChain, step: ApprovalStep, document: Document) -> dict:
+    """Context the interactive review page needs: the step tracker, who's next, and preview support."""
+    steps = (
+        db.query(ApprovalStep)
+        .filter(ApprovalStep.chain_id == chain.id)
+        .order_by(ApprovalStep.step_order)
+        .all()
+    )
+    overview = []
+    for s in steps:
+        who = chain_engine.resolve_approver(db, s)
+        overview.append({
+            "order": s.step_order,
+            "name": who.display_name if who else "Unknown",
+            "status": s.status,
+            "is_you": s.id == step.id,
+        })
+    next_step = next((o for o in overview if o["order"] > step.step_order), None)
+    content_type = (document.content_type or "").lower()
+    return {
+        "steps_overview": overview,
+        "next_approver_name": next_step["name"] if next_step else None,
+        "can_preview": content_type in _PREVIEWABLE_TYPES or content_type.startswith(_PREVIEWABLE_PREFIXES),
+        "is_image": content_type.startswith("image/"),
+    }
+
+
 @router.get("/{token}")
 def review_page(token: str, request: Request, db: Session = Depends(get_db), error: str | None = None):
     step = chain_engine.get_step_by_token(db, token)
@@ -43,6 +74,7 @@ def review_page(token: str, request: Request, db: Session = Depends(get_db), err
             {
                 "request": request, "current_user": None, "step": step,
                 "document": document, "initiator": initiator, "token": token, "chain": chain,
+                "error": error, **_review_extras(db, chain, step, document),
             },
         )
 
@@ -73,7 +105,7 @@ def review_page(token: str, request: Request, db: Session = Depends(get_db), err
         {
             "request": request, "current_user": None, "step": step,
             "document": document, "initiator": initiator, "token": token, "customer": customer,
-            "chain": chain,
+            "chain": chain, "error": error, **_review_extras(db, chain, step, document),
         },
     )
 

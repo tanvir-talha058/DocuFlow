@@ -220,6 +220,7 @@ def resume_review(
 def download_document(
     document_id: str,
     token: str | None = None,
+    inline: bool = False,
     db: Session = Depends(get_db),
     current_user: EmployeeCache | None = Depends(get_current_user_optional),
 ):
@@ -255,6 +256,9 @@ def download_document(
         path=document.signed_path or document.stored_path,
         filename=document.original_filename,
         media_type=document.content_type,
+        # inline=1 lets the review page embed PDFs/images in an <iframe>/<img>
+        # preview; the default stays a download.
+        content_disposition_type="inline" if inline else "attachment",
     )
 
 

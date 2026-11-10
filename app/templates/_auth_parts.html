@@ -1,0 +1,44 @@
+{# Shared pieces for the auth screens: password field with show/hide, 6-digit code input, resend button. #}
+
+{% macro password_field(id, label, name=None, autocomplete="current-password", minlength=None, hint=None, aside=None, autofocus=False) -%}
+<div class="field">
+  <div class="field-label-row">
+    <label for="{{ id }}">{{ label }}</label>
+    {% if aside %}{{ aside|safe }}{% endif %}
+  </div>
+  <div class="pw-wrap">
+    <input type="password" id="{{ id }}" name="{{ name or id }}" autocomplete="{{ autocomplete }}"
+           {% if minlength %}minlength="{{ minlength }}"{% endif %} required {% if autofocus %}autofocus{% endif %}>
+    <button type="button" class="pw-toggle" data-password-toggle="{{ id }}" aria-label="Show password" aria-pressed="false">
+      <svg class="pw-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+      <svg class="pw-eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.9 5.2A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.6 6.6A17.4 17.4 0 0 0 2 12s3.6 7 10 7a9.8 9.8 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m2 2 20 20"/></svg>
+    </button>
+  </div>
+  {% if hint %}<div class="field-hint">{{ hint }}</div>{% endif %}
+</div>
+{%- endmacro %}
+
+
+{% macro code_input(has_error=False, autosubmit=True) -%}
+<div class="field">
+  <label for="code-entry">6-digit code</label>
+  <div class="otp{% if has_error %} is-error{% endif %}" data-otp {% if autosubmit %}data-otp-autosubmit{% endif %}>
+    <input type="text" id="code-entry" name="code" class="otp-real" inputmode="numeric" autocomplete="one-time-code"
+           pattern="[0-9]{6}" maxlength="6" required aria-describedby="code-hint">
+    <div class="otp-boxes" aria-hidden="true">
+      {% for i in range(6) %}<span class="otp-box" data-otp-box="{{ i }}"></span>{% if i == 2 %}<span class="otp-sep"></span>{% endif %}{% endfor %}
+    </div>
+  </div>
+  <div class="field-hint" id="code-hint">Check your inbox (and spam folder). The code expires in 10 minutes.</div>
+</div>
+{%- endmacro %}
+
+
+{% macro resend_button(action, wait) -%}
+<form method="post" action="{{ action }}" class="otp-resend" data-no-loading="1">
+  <span class="field-hint">Didn't get it?</span>
+  <button type="submit" class="link-btn" data-resend data-wait="{{ wait }}" {% if wait > 0 %}disabled{% endif %}>
+    <span data-resend-label>{% if wait > 0 %}Send a new code in {{ wait }}s{% else %}Send a new code{% endif %}</span>
+  </button>
+</form>
+{%- endmacro %}

@@ -1,24 +1,43 @@
 {% extends "_layout.html" %}
-{% block preheader %}{{ rejector_name }} rejected {{ document_filename }}.{% endblock %}
-{% block badge %}
-  <div style="display:inline-block;font-family:Consolas,'Courier New',monospace;font-size:12px;font-weight:600;letter-spacing:0.04em;color:#b03a28;border:1.5px solid #b03a28;padding:3px 9px;margin-bottom:12px;">REJECTED</div>
+{% from "_layout.html" import status_pill, detail_row, primary_button, secondary_button %}
+
+{% block preheader %}{{ rejector_name }} rejected "{{ display_title }}".{% endblock %}
+
+{% block accent %}#b03a28{% endblock %}
+
+{% block status %}{{ status_pill("Rejected", "#b03a28", "#fbe6e2") }}{% endblock %}
+
+{% block heading %}&ldquo;{{ display_title }}&rdquo; was rejected{% endblock %}
+
+{% block intro %}Hi {{ initiator_name }}, {{ rejector_name }} rejected this document, so the approval has stopped. Open it in DocuFlow to see the reason and the full history, then make changes and start a new approval if needed.{% endblock %}
+
+{% block details %}
+  {{ detail_row("Document", document_filename) }}
+  {{ detail_row("Rejected by", rejector_name) }}
+  {{ detail_row("At step", "Step " ~ step_order, last=True) }}
 {% endblock %}
-{% block heading %}{{ document_filename }}{% endblock %}
-{% block body %}
-  <p style="margin:0 0 12px 0;">{{ rejector_name }} rejected this at step {{ step_order }}.</p>
-  <p style="margin:0 0 12px 0;padding:10px 12px;background-color:#f6f7f9;border-left:3px solid #b03a28;color:#161a2b;">{{ reason }}</p>
-{% endblock %}
-{% block cta %}
+
+{% block note %}
 <tr>
-  <td style="padding:4px 28px 24px 28px;">
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+  <td style="padding:16px 32px 0 32px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
-        <td style="background-color:#2b3a66;">
-          <a href="{{ chain_url }}" style="display:inline-block;padding:11px 22px;font-family:'Segoe UI',Arial,sans-serif;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;">View the audit trail</a>
+        <td style="padding:12px 16px;border-left:3px solid #b03a28;background-color:#fdf5f3;font-family:'Segoe UI',Arial,sans-serif;font-size:13px;line-height:1.6;color:#1b2033;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#8a90a2;margin-bottom:4px;">Reason</div>
+          {{ reason }}
         </td>
       </tr>
     </table>
   </td>
 </tr>
 {% endblock %}
-{% block footer %}Sent by DocuFlow on behalf of your organization.{% endblock %}
+
+{% block actions %}
+  {{ primary_button(chain_url, "View details") }}
+  <td width="10" style="font-size:0;line-height:0;">&nbsp;</td>
+  {{ secondary_button(server_url, "Go to dashboard") }}
+{% endblock %}
+
+{% block fallback %}Or open this link: <a href="{{ chain_url }}" target="_blank" style="color:#2b3a66;word-break:break-all;">{{ chain_url }}</a>{% endblock %}
+
+{% block footer %}You're receiving this because you started this approval.{% endblock %}

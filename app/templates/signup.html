@@ -1,34 +1,33 @@
 {% extends "base.html" %}
+{% from "_auth_parts.html" import password_field %}
 {% block title %}Create account - DocuFlow{% endblock %}
 {% block content %}
   <div class="auth-card dossier">
     <span class="dossier-tab">CREATE ACCOUNT</span>
+    <ol class="auth-progress" aria-label="Sign-up steps">
+      <li class="is-current" aria-current="step">Your details</li>
+      <li>Confirm email</li>
+    </ol>
     <h1>Set up your account</h1>
-    <p>Use your <strong>@{{ domain }}</strong> work email. No invite needed.</p>
+    <p>Use your <strong>@{{ domain }}</strong> work email. We'll email you a code to confirm it.</p>
 
     {% if error %}<div class="error-banner">{{ error|replace("+", " ") }}</div>{% endif %}
 
-    <form method="post" action="/auth/signup">
+    <form method="post" action="/auth/signup" data-password-match>
       <div class="field">
         <label for="display_name">Full name</label>
-        <input type="text" id="display_name" name="display_name" placeholder="Jane Rahman" required autofocus>
+        <input type="text" id="display_name" name="display_name" placeholder="Jane Rahman" autocomplete="name" required autofocus>
       </div>
       <div class="field">
         <label for="email">Work email</label>
-        <input type="email" id="email" name="email" placeholder="you@{{ domain }}" required>
+        <input type="email" id="email" name="email" placeholder="you@{{ domain }}" autocomplete="email" required>
         <div class="field-hint">Must end in @{{ domain }}.</div>
       </div>
-      <div class="field">
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" minlength="8" required>
-        <div class="field-hint">At least 8 characters.</div>
-      </div>
-      <div class="field">
-        <label for="confirm_password">Confirm password</label>
-        <input type="password" id="confirm_password" name="confirm_password" minlength="8" required>
-      </div>
-      <button type="submit" class="btn btn-primary">Create account</button>
+      {{ password_field("password", "Password", autocomplete="new-password", minlength=8, hint="At least 8 characters.") }}
+      {{ password_field("confirm_password", "Confirm password", autocomplete="new-password", minlength=8) }}
+      <div class="pw-match field-hint" data-password-match-hint aria-live="polite"></div>
+      <button type="submit" class="btn btn-primary">Continue</button>
     </form>
-    <p class="field-hint" style="margin-top: 1.1rem;">Already have an account? <a href="/auth/login">Log in</a></p>
+    <p class="field-hint auth-alt">Already have an account? <a href="/auth/login">Log in</a></p>
   </div>
 {% endblock %}

@@ -23,15 +23,25 @@ let strokeHistory = [];
 function resizeCanvasForDPR() {
   const ratio = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
+  if (rect.width === 0) return; // still hidden; sized again when the panel opens
   canvas.width = rect.width * ratio;
   canvas.height = rect.height * ratio;
-  ctx.scale(ratio, ratio);
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
   ctx.lineWidth = currentWidth;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   ctx.strokeStyle = currentColor;
 }
 resizeCanvasForDPR();
+
+// The signature pad lives inside the "Approve" panel, which starts hidden.
+// Size the canvas once it's visible; resizing wipes it, so skip if signed.
+document.addEventListener("review:panel-shown", (evt) => {
+  if (evt.detail === "approve" && !hasInk) {
+    resizeCanvasForDPR();
+    if (currentMode === "type") renderTypedToCanvas(typedNameInput.value);
+  }
+});
 
 function saveSnapshot() {
   strokeHistory.push(ctx.getImageData(0, 0, canvas.width, canvas.height));

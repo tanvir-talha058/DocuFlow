@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_auth_parts.html" import code_input, resend_button %}
+{% block title %}Confirm your email - DocuFlow{% endblock %}
+{% block content %}
+  <div class="auth-card dossier">
+    <span class="dossier-tab">CREATE ACCOUNT</span>
+    <ol class="auth-progress" aria-label="Sign-up steps">
+      <li class="is-done">Your details</li>
+      <li class="is-current" aria-current="step">Confirm email</li>
+    </ol>
+    <h1>Check your email</h1>
+    <p>We sent a 6-digit code to <strong>{{ masked_email }}</strong>. Enter it below to finish creating your account.</p>
+
+    {% if error %}<div class="error-banner">{{ error }}</div>{% endif %}
+    {% if notice %}<div class="success-banner">{{ notice }}</div>{% endif %}
+
+    <form method="post" action="/auth/verify">
+      {{ code_input(has_error=error is not none) }}
+      <button type="submit" class="btn btn-primary">Confirm and create account</button>
+    </form>
+
+    {{ resend_button("/auth/verify/resend", resend_wait) }}
+    <p class="field-hint auth-alt">Wrong email? <a href="/auth/signup">Start again</a></p>
+  </div>
+{% endblock %}

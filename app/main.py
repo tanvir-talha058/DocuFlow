@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -14,6 +15,16 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(title="DocuFlow")
 app.add_middleware(SessionMiddleware, secret_key=settings.session_secret)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    if exc.status_code == 401:
+        accept = request.headers.get("accept", "")
+        if "text/html" in accept or "*/*" in accept:
+            return RedirectResponse(url="/auth/login", status_code=303)
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
 
 app.include_router(auth.router)
 app.include_router(dashboard.router)

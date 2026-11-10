@@ -135,6 +135,7 @@ def _activate_step(db: Session, *, chain: ApprovalChain, step: ApprovalStep) -> 
         review_token=raw_token,
         title=chain.title,
         message=chain.message,
+        chain_id=chain.id,
     )
 
     if step.approver_type == ApproverType.EMPLOYEE.value:
@@ -180,6 +181,7 @@ def resend_reminder(db: Session, step: ApprovalStep) -> None:
         review_token=raw_token,
         title=chain.title,
         message=chain.message,
+        chain_id=chain.id,
     )
     db.commit()
 
@@ -290,16 +292,7 @@ def approve_step(db: Session, step: ApprovalStep, *, signature_data_url: str | N
         initiator = db.get(EmployeeCache, chain.initiator_employee_id)
         document = db.get(Document, chain.document_id)
 
-        all_steps = (
-            db.query(ApprovalStep)
-            .filter(ApprovalStep.chain_id == chain.id)
-            .order_by(ApprovalStep.step_order)
-            .all()
-        )
-        steps_with_approvers = [(s, resolve_approver(db, s)) for s in all_steps]
-        chain.certificate_path = certificate.generate_certificate(
-            chain=chain, document=document, steps_with_approvers=steps_with_approvers,
-        )
+        chain.certificate_path = certificate.generate_certificate(db, chain)
         db.flush()
 
         notification_center.notify(
@@ -316,6 +309,7 @@ def approve_step(db: Session, step: ApprovalStep, *, signature_data_url: str | N
                 document_filename=document.original_filename,
                 total_steps=_total_steps(db, chain.id),
                 chain_id=chain.id,
+                title=chain.title,
             )
 
     db.commit()
@@ -365,6 +359,7 @@ def reject_step(db: Session, step: ApprovalStep, reason: str) -> None:
             step_order=step.step_order,
             reason=reason,
             chain_id=chain.id,
+            title=chain.title,
         )
 
     db.commit()

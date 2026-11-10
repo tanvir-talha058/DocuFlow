@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_auth_parts.html" import password_field %}
 {% block title %}Set up your account - DocuFlow{% endblock %}
 {% block content %}
   <div class="auth-card dossier">
@@ -15,16 +16,10 @@
 
     {% if error %}<div class="error-banner">{{ error }}</div>{% endif %}
 
-    <form method="post" action="/review/{{ token }}/customer-setup">
-      <div class="field">
-        <label for="password">New password</label>
-        <input type="password" id="password" name="password" minlength="8" required>
-        <div class="field-hint">At least 8 characters.</div>
-      </div>
-      <div class="field">
-        <label for="confirm_password">Confirm password</label>
-        <input type="password" id="confirm_password" name="confirm_password" minlength="8" required>
-      </div>
+    <form method="post" action="/review/{{ token }}/customer-setup" data-password-match>
+      {{ password_field("password", "New password", autocomplete="new-password", minlength=8, hint="At least 8 characters.", autofocus=True) }}
+      {{ password_field("confirm_password", "Confirm password", autocomplete="new-password", minlength=8) }}
+      <div class="pw-match field-hint" data-password-match-hint aria-live="polite"></div>
       <button type="submit" class="btn btn-primary">Create account and continue</button>
     </form>
   </div>

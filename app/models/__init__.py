@@ -5,6 +5,7 @@ from app.models.chain import ApprovalChain, ApprovalStep, ApproverType
 from app.models.signature import SignatureRecord
 from app.models.audit import AuditEvent
 from app.models.notification import Notification, NotificationType
+from app.models.email_code import EmailCode, EmailCodePurpose
 
 __all__ = [
     "EmployeeCache",
@@ -17,4 +18,6 @@ __all__ = [
     "AuditEvent",
     "Notification",
     "NotificationType",
+    "EmailCode",
+    "EmailCodePurpose",
 ]

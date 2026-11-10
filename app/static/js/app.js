@@ -640,3 +640,108 @@ document.querySelectorAll('.dash-charts-row').forEach((row) => {
     li.addEventListener('mouseleave', resetHighlight);
   });
 });
+
+// ---- Auth: show/hide password ----
+// <button data-password-toggle="input-id"> next to a password input.
+document.querySelectorAll("[data-password-toggle]").forEach((btn) => {
+  const input = document.getElementById(btn.dataset.passwordToggle);
+  if (!input) return;
+  btn.addEventListener("click", () => {
+    const show = input.type === "password";
+    input.type = show ? "text" : "password";
+    btn.setAttribute("aria-pressed", show ? "true" : "false");
+    btn.setAttribute("aria-label", show ? "Hide password" : "Show password");
+    btn.classList.toggle("is-showing", show);
+    // Keep the caret where it was so toggling mid-typing isn't disruptive.
+    const pos = input.selectionStart;
+    input.focus();
+    try { input.setSelectionRange(pos, pos); } catch (e) { /* not supported on some types */ }
+  });
+});
+// Never submit a form with the password left visible in the field (autofill/history safety).
+document.addEventListener("submit", (event) => {
+  event.target.querySelectorAll?.("[data-password-toggle]").forEach((btn) => {
+    const input = document.getElementById(btn.dataset.passwordToggle);
+    if (input) input.type = "password";
+  });
+}, true);
+
+// ---- Auth: live "passwords match" hint ----
+document.querySelectorAll("form[data-password-match]").forEach((form) => {
+  const pw = form.querySelector("#password");
+  const confirmPw = form.querySelector("#confirm_password");
+  const hint = form.querySelector("[data-password-match-hint]");
+  if (!pw || !confirmPw || !hint) return;
+  function sync() {
+    if (!confirmPw.value) { hint.textContent = ""; hint.className = "pw-match field-hint"; return; }
+    const ok = pw.value === confirmPw.value && pw.value.length >= 8;
+    hint.textContent = ok ? "Passwords match" : (pw.value.length < 8 ? "Use at least 8 characters" : "Passwords don't match yet");
+    hint.className = `pw-match field-hint ${ok ? "is-ok" : "is-bad"}`;
+    confirmPw.setCustomValidity(pw.value === confirmPw.value ? "" : "Passwords don't match");
+  }
+  pw.addEventListener("input", sync);
+  confirmPw.addEventListener("input", sync);
+});
+
+// ---- Auth: 6-digit code input ----
+// One real <input> (so autofill, paste and password managers work) drawn as six boxes.
+document.querySelectorAll("[data-otp]").forEach((wrap) => {
+  const input = wrap.querySelector(".otp-real");
+  const boxes = Array.from(wrap.querySelectorAll("[data-otp-box]"));
+  const form = wrap.closest("form");
+  const autosubmit = wrap.hasAttribute("data-otp-autosubmit");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function render() {
+    const digits = input.value;
+    const focused = document.activeElement === input;
+    boxes.forEach((box, i) => {
+      box.textContent = digits[i] || "";
+      box.classList.toggle("is-filled", Boolean(digits[i]));
+      box.classList.toggle("is-active", focused && i === Math.min(digits.length, 5));
+    });
+  }
+
+  input.addEventListener("input", () => {
+    const clean = input.value.replace(/\D/g, "").slice(0, 6);
+    if (clean !== input.value) input.value = clean;
+    wrap.classList.remove("is-error");
+    render();
+    if (autosubmit && clean.length === 6 && form) {
+      wrap.classList.add("is-complete");
+      // Let the sixth digit paint before the page navigates.
+      setTimeout(() => form.requestSubmit(), reduceMotion ? 0 : 160);
+    }
+  });
+  input.addEventListener("focus", render);
+  input.addEventListener("blur", render);
+  // Always keep the caret at the end: boxes are filled left to right.
+  input.addEventListener("keydown", () => {
+    requestAnimationFrame(() => input.setSelectionRange(input.value.length, input.value.length));
+  });
+  wrap.addEventListener("click", () => input.focus());
+
+  if (wrap.classList.contains("is-error") && !reduceMotion) {
+    wrap.classList.add("is-shaking");
+    wrap.addEventListener("animationend", () => wrap.classList.remove("is-shaking"), { once: true });
+  }
+  render();
+  input.focus();
+});
+
+// ---- Auth: "Send a new code" countdown ----
+document.querySelectorAll("[data-resend]").forEach((btn) => {
+  const label = btn.querySelector("[data-resend-label]");
+  let left = parseInt(btn.dataset.wait || "0", 10);
+  if (left <= 0) return;
+  const id = setInterval(() => {
+    left -= 1;
+    if (left <= 0) {
+      clearInterval(id);
+      btn.disabled = false;
+      label.textContent = "Send a new code";
+    } else {
+      label.textContent = `Send a new code in ${left}s`;
+    }
+  }, 1000);
+});

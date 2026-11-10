@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_auth_parts.html" import password_field %}
 {% block title %}Log in - DocuFlow{% endblock %}
 {% block content %}
   <div class="auth-card dossier">
@@ -7,18 +8,16 @@
     <p>Log in with your work email to get started.</p>
 
     {% if error %}<div class="error-banner">{{ error|replace("+", " ") }}</div>{% endif %}
+    {% if success %}<div class="success-banner">{{ success }}</div>{% endif %}
 
     <form method="post" action="/auth/login">
       <div class="field">
         <label for="email">Work email</label>
-        <input type="email" id="email" name="email" placeholder="you@upaybd.com" required autofocus>
+        <input type="email" id="email" name="email" placeholder="you@upaybd.com" autocomplete="email" required autofocus>
       </div>
-      <div class="field">
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" required>
-      </div>
+      {{ password_field("password", "Password", aside='<a href="/auth/forgot" class="field-aside-link">Forgot password?</a>') }}
       <button type="submit" class="btn btn-primary">Log in</button>
     </form>
-    <p class="field-hint" style="margin-top: 1.1rem;">New here? <a href="/auth/signup">Create an account</a></p>
+    <p class="field-hint auth-alt">New here? <a href="/auth/signup">Create an account</a></p>
   </div>
 {% endblock %}

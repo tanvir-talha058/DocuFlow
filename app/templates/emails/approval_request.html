@@ -1,23 +1,44 @@
 {% extends "_layout.html" %}
-{% block preheader %}{{ initiator_name }} needs your review on {{ display_title }}.{% endblock %}
-{% block heading %}{{ display_title }}{% endblock %}
-{% block body %}
-  <p style="margin:0 0 12px 0;">{{ initiator_name }} sent you this document to review. You're step {{ step_order }} of {{ total_steps }}{% if total_steps > 1 %} in the chain{% endif %}.</p>
-  {% if message %}
-    <p style="margin:0 0 12px 0;padding:10px 12px;background-color:#f6f7f9;border-left:3px solid #2b3a66;color:#161a2b;">{{ message }}</p>
-  {% endif %}
+{% from "_layout.html" import status_pill, detail_row, primary_button, secondary_button %}
+
+{% block preheader %}{{ initiator_name }} has asked you to review "{{ display_title }}".{% endblock %}
+
+{% block status %}{{ status_pill("Action required", "#8a5a00", "#fdf2d8") }}{% endblock %}
+
+{% block heading %}Please review &ldquo;{{ display_title }}&rdquo;{% endblock %}
+
+{% block intro %}Hi {{ approver_name }}, {{ initiator_name }} has sent you a document to approve. Open it to read, sign, approve or reject.{% endblock %}
+
+{% block details %}
+  {{ detail_row("Document", document_filename) }}
+  {{ detail_row("Requested by", initiator_name) }}
+  {{ detail_row("Your step", "Step " ~ step_order ~ " of " ~ total_steps) }}
+  {{ detail_row("Link expires", "In " ~ ttl_hours ~ " hours", last=True) }}
 {% endblock %}
-{% block cta %}
+
+{% block note %}
+{% if message %}
 <tr>
-  <td style="padding:4px 28px 24px 28px;">
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+  <td style="padding:16px 32px 0 32px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
-        <td style="background-color:#2b3a66;">
-          <a href="{{ review_url }}" style="display:inline-block;padding:11px 22px;font-family:'Segoe UI',Arial,sans-serif;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;">Review and respond</a>
+        <td style="padding:12px 16px;border-left:3px solid #2b3a66;background-color:#f8f9fb;font-family:'Segoe UI',Arial,sans-serif;font-size:13px;line-height:1.6;color:#1b2033;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#8a90a2;margin-bottom:4px;">Message from {{ initiator_name }}</div>
+          {{ message }}
         </td>
       </tr>
     </table>
   </td>
 </tr>
+{% endif %}
 {% endblock %}
-{% block footer %}This link is private to you and expires in {{ ttl_hours }} hours.{% endblock %}
+
+{% block actions %}
+  {{ primary_button(review_url, "Review document") }}
+  <td width="10" style="font-size:0;line-height:0;">&nbsp;</td>
+  {{ secondary_button(server_url, "Open DocuFlow") }}
+{% endblock %}
+
+{% block fallback %}If the button doesn't work, copy this link into your browser:<br><a href="{{ review_url }}" target="_blank" style="color:#2b3a66;word-break:break-all;">{{ review_url }}</a>{% endblock %}
+
+{% block footer %}This review link is private to you. Please don't forward this email.{% endblock %}

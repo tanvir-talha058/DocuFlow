@@ -1,23 +1,27 @@
 {% extends "_layout.html" %}
-{% block preheader %}Every approver has signed off on {{ document_filename }}.{% endblock %}
-{% block badge %}
-  <div style="display:inline-block;font-family:Consolas,'Courier New',monospace;font-size:12px;font-weight:600;letter-spacing:0.04em;color:#2f6b45;border:1.5px solid #2f6b45;padding:3px 9px;margin-bottom:12px;">APPROVED</div>
+{% from "_layout.html" import status_pill, detail_row, primary_button, secondary_button %}
+
+{% block preheader %}"{{ display_title }}" has been fully approved.{% endblock %}
+
+{% block accent %}#2f6b45{% endblock %}
+
+{% block status %}{{ status_pill("Approved", "#2f6b45", "#e3f2e8") }}{% endblock %}
+
+{% block heading %}&ldquo;{{ display_title }}&rdquo; is fully approved{% endblock %}
+
+{% block intro %}Hi {{ initiator_name }}, every approver has signed off. You don't need to do anything else. The certificate of completion is ready in DocuFlow.{% endblock %}
+
+{% block details %}
+  {{ detail_row("Document", document_filename) }}
+  {{ detail_row("Approvals", total_steps ~ " of " ~ total_steps ~ " complete", last=True) }}
 {% endblock %}
-{% block heading %}{{ document_filename }}{% endblock %}
-{% block body %}
-  <p style="margin:0 0 12px 0;">All {{ total_steps }} approver{{ "s" if total_steps != 1 else "" }} have signed off. There's nothing left for you to do.</p>
+
+{% block actions %}
+  {{ primary_button(chain_url, "View document") }}
+  <td width="10" style="font-size:0;line-height:0;">&nbsp;</td>
+  {{ secondary_button(server_url, "Go to dashboard") }}
 {% endblock %}
-{% block cta %}
-<tr>
-  <td style="padding:4px 28px 24px 28px;">
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-      <tr>
-        <td style="background-color:#2b3a66;">
-          <a href="{{ chain_url }}" style="display:inline-block;padding:11px 22px;font-family:'Segoe UI',Arial,sans-serif;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;">View the audit trail</a>
-        </td>
-      </tr>
-    </table>
-  </td>
-</tr>
-{% endblock %}
-{% block footer %}Sent by DocuFlow on behalf of your organization.{% endblock %}
+
+{% block fallback %}Or open this link: <a href="{{ chain_url }}" target="_blank" style="color:#2b3a66;word-break:break-all;">{{ chain_url }}</a>{% endblock %}
+
+{% block footer %}You're receiving this because you started this approval.{% endblock %}

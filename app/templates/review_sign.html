@@ -1,85 +1,83 @@
 {% extends "base.html" %}
+{% from "_review_parts.html" import review_header, steps_tracker, doc_preview, choice_buttons, reject_panel %}
 {% block title %}Sign document - DocuFlow{% endblock %}
 {% block content %}
-  <h1 class="doc-title">{{ chain.title or document.original_filename }}</h1>
-  {% if chain.title %}<p class="ref" style="margin-top: -1rem;">{{ document.original_filename }}</p>{% endif %}
-  <p class="review-meta">
-    Sent by <strong>{{ initiator.display_name }}</strong> for your signature, as {{ customer.display_name }}.
-    You're signer {{ step.step_order }} in this chain.
-  </p>
-
-  {% if chain.message %}
-    <div class="chain-message">{{ chain.message }}</div>
-  {% endif %}
+<div class="rv-page" data-review-page>
+  {{ review_header(chain, document, initiator, step, "signer", steps_overview|length) }}
 
   {% if error %}<div class="error-banner">{{ error }}</div>{% endif %}
 
-  <div class="dossier">
-    <span class="dossier-tab">STEP {{ step.step_order }}</span>
-    <p><a href="/documents/{{ document.id }}/download?token={{ token }}" class="icon-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>Open the document to review</a></p>
+  {{ doc_preview(document, token, can_preview, is_image) }}
 
-    <div class="signature-pane">
-      <div class="sign-tabs">
-        <button type="button" class="sign-tab is-active" data-sign-tab="draw">Draw signature</button>
-        <button type="button" class="sign-tab" data-sign-tab="type">Type signature</button>
-      </div>
+  {{ steps_tracker(steps_overview) }}
 
-      <div class="sign-panel" id="panel-draw">
-        <div class="sign-toolbar">
-          <div class="sign-color-picker">
-            <button type="button" class="color-dot is-active" data-color="#1e3a8a" style="background: #1e3a8a;" title="Navy Blue"></button>
-            <button type="button" class="color-dot" data-color="#0f172a" style="background: #0f172a;" title="Classic Black"></button>
-            <button type="button" class="color-dot" data-color="#2563eb" style="background: #2563eb;" title="Royal Blue"></button>
-          </div>
-          <div class="sign-width-picker">
-            <button type="button" class="width-btn" data-width="1.5" title="Fine">Fine</button>
-            <button type="button" class="width-btn is-active" data-width="2.5" title="Medium">Medium</button>
-            <button type="button" class="width-btn" data-width="4" title="Bold">Bold</button>
-          </div>
-          <button type="button" class="btn-undo" id="undo-signature" title="Undo stroke">Undo</button>
-          <button type="button" class="btn btn-ghost btn-sm" id="clear-signature">Clear</button>
-        </div>
-        <div class="signature-canvas-wrap">
-          <canvas id="signature-pad" width="700" height="160"></canvas>
-          <div class="sign-here-line"></div>
-          <span class="sign-here-mark">&times;</span>
-        </div>
-        <div class="field-hint" style="margin-top: 0.4rem;">Draw with your mouse, stylus, or finger.</div>
-      </div>
-
-      <div class="sign-panel" id="panel-type" hidden>
-        <div class="field" style="margin-bottom: 0.8rem;">
-          <label for="typed-name">Type your full name</label>
-          <input type="text" id="typed-name" value="{{ customer.display_name }}" placeholder="Your legal name">
-        </div>
-        <div class="typed-preview-card">
-          <span class="typed-preview-text" id="typed-preview">{{ customer.display_name }}</span>
-        </div>
-        <div class="field-hint" style="margin-top: 0.4rem;">A digital signature generated from your legal name.</div>
-      </div>
-
-      <form id="sign-form" method="post" action="/review/{{ token }}/approve" style="margin-top: 1.25rem;">
-        <input type="hidden" name="signature_data_url" id="signature-data-url">
-        <div class="decision-row">
-          <button type="submit" class="btn btn-stamp-approve" id="approve-btn" disabled>Approve and sign</button>
-        </div>
-      </form>
-
-      <form method="post" action="/review/{{ token }}/reject" class="decision-row" data-confirm-reject>
-        <input type="text" name="reason" class="reject-reason" placeholder="Reason for rejecting" required>
-        <button type="submit" class="btn btn-stamp-reject">Reject</button>
-      </form>
+  <section class="rv-card rv-decide" aria-labelledby="decide-title">
+    <div class="rv-card-head">
+      <h2 class="rv-section-title" id="decide-title">Your decision</h2>
+      <span class="rv-muted rv-hide-sm">Press A or R to choose</span>
     </div>
-  </div>
 
-  <script src="/static/js/signature_pad.js?v={{ static_version }}"></script>
+    {{ choice_buttons("Sign as " ~ customer.display_name) }}
+
+    <div class="rv-panel rv-panel-approve" data-panel="approve" hidden>
+      <div class="signature-pane">
+        <div class="sign-tabs">
+          <button type="button" class="sign-tab is-active" data-sign-tab="draw">Draw signature</button>
+          <button type="button" class="sign-tab" data-sign-tab="type">Type signature</button>
+        </div>
+
+        <div class="sign-panel" id="panel-draw">
+          <div class="sign-toolbar">
+            <div class="sign-color-picker">
+              <button type="button" class="color-dot is-active" data-color="#1e3a8a" style="background: #1e3a8a;" title="Navy blue" aria-label="Navy blue ink"></button>
+              <button type="button" class="color-dot" data-color="#0f172a" style="background: #0f172a;" title="Black" aria-label="Black ink"></button>
+              <button type="button" class="color-dot" data-color="#2563eb" style="background: #2563eb;" title="Royal blue" aria-label="Royal blue ink"></button>
+            </div>
+            <div class="sign-width-picker">
+              <button type="button" class="width-btn" data-width="1.5">Fine</button>
+              <button type="button" class="width-btn is-active" data-width="2.5">Medium</button>
+              <button type="button" class="width-btn" data-width="4">Bold</button>
+            </div>
+            <button type="button" class="btn-undo" id="undo-signature" title="Undo last stroke">Undo</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="clear-signature">Clear</button>
+          </div>
+          <div class="signature-canvas-wrap">
+            <canvas id="signature-pad" width="700" height="160"></canvas>
+            <div class="sign-here-line"></div>
+            <span class="sign-here-mark">&times;</span>
+          </div>
+          <div class="field-hint" style="margin-top: 0.4rem;">Draw with your mouse, stylus or finger.</div>
+        </div>
+
+        <div class="sign-panel" id="panel-type" hidden>
+          <div class="field" style="margin-bottom: 0.8rem;">
+            <label for="typed-name">Type your full name</label>
+            <input type="text" id="typed-name" value="{{ customer.display_name }}" placeholder="Your legal name">
+          </div>
+          <div class="typed-preview-card">
+            <span class="typed-preview-text" id="typed-preview">{{ customer.display_name }}</span>
+          </div>
+          <div class="field-hint" style="margin-top: 0.4rem;">Your name is turned into a handwritten-style signature.</div>
+        </div>
+
+        <form id="sign-form" method="post" action="/review/{{ token }}/approve" data-approve-form>
+          <input type="hidden" name="signature_data_url" id="signature-data-url">
+          <p class="rv-muted rv-next">
+            {% if next_approver_name %}{{ next_approver_name }} will be asked to review it next.{% else %}You're the last signer. {{ initiator.display_name }} will be told it's fully approved.{% endif %}
+          </p>
+          <div class="rv-actions">
+            <button type="button" class="btn btn-ghost" data-choice-cancel>Cancel</button>
+            <button type="submit" class="btn rv-btn-approve" id="approve-btn" disabled>Sign and approve</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    {{ reject_panel(token) }}
+  </section>
+</div>
 {% endblock %}
 {% block scripts %}
-<script>
-  document.querySelectorAll("[data-confirm-reject]").forEach((form) => {
-    form.addEventListener("submit", (e) => {
-      if (!confirm("Reject this document? This cannot be undone.")) e.preventDefault();
-    });
-  });
-</script>
+<script src="/static/js/signature_pad.js?v={{ static_version }}"></script>
+<script src="/static/js/review.js?v={{ static_version }}"></script>
 {% endblock %}

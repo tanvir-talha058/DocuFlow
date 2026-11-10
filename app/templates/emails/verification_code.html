@@ -1,0 +1,29 @@
+{% extends "_layout.html" %}
+{% from "_layout.html" import status_pill %}
+
+{% block preheader %}Your DocuFlow code is {{ code }}. It expires in {{ ttl_minutes }} minutes.{% endblock %}
+
+{% block status %}{{ status_pill("Verification code", "#2b3a66", "#e8ecf7") }}{% endblock %}
+
+{% block heading %}{% if purpose == "reset" %}Reset your DocuFlow password{% else %}Confirm your DocuFlow account{% endif %}{% endblock %}
+
+{% block intro %}{% if purpose == "reset" %}Someone asked to reset the password for {{ email }}. Enter this code on the reset page to choose a new password.{% else %}Enter this code to confirm {{ email }} and finish creating your account.{% endif %}{% endblock %}
+
+{% block note %}
+<tr>
+  <td align="center" style="padding:4px 32px 8px 32px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="background-color:#f8f9fb;border:1px solid #eceef3;border-radius:8px;">
+      <tr>
+        <td align="center" style="padding:18px 28px;font-family:Consolas,'Courier New',monospace;font-size:34px;font-weight:700;letter-spacing:10px;color:#1b2033;">{{ code }}</td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+  <td align="center" style="padding:6px 32px 28px 32px;font-family:'Segoe UI',Arial,sans-serif;font-size:13px;color:#5a6072;">
+    The code expires in {{ ttl_minutes }} minutes and can only be used once.
+  </td>
+</tr>
+{% endblock %}
+
+{% block footer %}{% if purpose == "reset" %}Didn't ask for this? You can ignore this email. Your password hasn't changed.{% else %}Didn't sign up for DocuFlow? You can ignore this email.{% endif %} Never share this code with anyone.{% endblock %}
